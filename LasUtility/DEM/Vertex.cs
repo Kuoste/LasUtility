@@ -1,4 +1,5 @@
-﻿using MIConvexHull;
+﻿using DotSpatial.Topology;
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,12 +26,23 @@ namespace LasUtility.DEM
             }
         }
 
+        public Coordinate Coordinate
+        {
+            get
+            {
+                return new Coordinate(_positionXY[0], _positionXY[1], Height);
+            }
+        }
+
+
         public Vertex(double x, double y, double z)
         {
             Position = new double[] { x, y };
             Height = z;
         }
-		
+
+
+
         //protected override Geometry DefiningGeometry
         //{
         //    get

@@ -1,4 +1,5 @@
-﻿using LasReader.DEM;
+﻿using DotSpatial.Topology;
+using LasReader.DEM;
 using LasUtility.LAS;
 using MIConvexHull;
 using System;
@@ -9,28 +10,60 @@ using System.Threading.Tasks;
 
 namespace LasUtility.DEM
 {
-    class SurfaceTriangulation
+    public class SurfaceTriangulation
     {
-        List<Vertex> vertices = new List<Vertex>();
+        List<Vertex> _vertices = new List<Vertex>();
+        ITriangulation<Vertex, Cell<Vertex>> _tri;
+        TriangleIndexGrid _grid;
 
         public void AddPoint(LasPoint p)
         {
-            vertices.Add(new Vertex(p.x, p.y, p.z));
+            _vertices.Add(new Vertex(p.x, p.y, p.z));
         }
 
         public void Create(int nRows, int nCols)
         {
+            if (!_vertices.Any())
+                throw new InvalidOperationException("Add triangulation points before creating triangulation.");
 
-            var tri = Triangulation.CreateDelaunay<Vertex>(vertices);
+            _tri = Triangulation.CreateDelaunay<Vertex, Cell<Vertex>>(_vertices);
 
-            TriangleIndexGrid grid = new TriangleIndexGrid(nRows, nCols);
+            _grid = new TriangleIndexGrid(nRows, nCols);
 
-            for (int i = 0; i < tri.Cells.Count(); i++)
+            for (int i = 0; i < _tri.Cells.Count(); i++)
             {
-                var c = tri.Cells.ElementAt(i);
-                grid.AddIndex(c.Vertices, i);
+                var c = _tri.Cells.ElementAt(i);
+                _grid.AddIndex(c.GetPolygon(), i);
+            }
+        }
+
+        public double GetValue(double x, double y)
+        {
+            if (_grid == null)
+                throw new InvalidOperationException("Triangulation is not created.");
+
+            List<int> indexes = _grid.GetIndexes((int)y, (int)x);
+            Point c = new Point(x, y);
+
+            foreach (int i in indexes)
+            {
+                var cell = _tri.Cells.ElementAt(i);
+                Polygon p = cell.GetPolygon();
+
+                if (p.Intersects(c))
+                {
+                    return InterpolateHeightFromPolygon(p, c);
+                }
             }
 
+            return double.NaN;
+        }
+
+        private double InterpolateHeightFromPolygon(Polygon p, Point c)
+        {
+            // todo: Find height from plane. Or from surface formed by adjacent cells.
+
+            return ((p.Coordinates[0].Z + p.Coordinates[1].Z + p.Coordinates[2].Z) / 3);
         }
     }
 }

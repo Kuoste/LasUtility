@@ -1,4 +1,5 @@
 ﻿using DotSpatial.Topology;
+using LasUtility.DEM;
 using MIConvexHull;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 namespace LasReader.DEM
 {
 
-    class TriangleIndexGrid
+    internal class TriangleIndexGrid
     {
         List<int>[][] _grid;
 
@@ -35,33 +36,33 @@ namespace LasReader.DEM
         }
 
 
-        public void AddIndex(IVertex[] vertices, int index)
+        public void AddIndex(Polygon p, int index)
         {
-            throw new NotImplementedException();
+            int iRowMin = (int)Math.Floor(p.Envelope.Minimum.Y);
+            int iColMin = (int)Math.Floor(p.Envelope.Minimum.X);
+            int iRowMax = (int)Math.Ceiling(p.Envelope.Maximum.Y);
+            int iColMax = (int)Math.Ceiling(p.Envelope.Maximum.X);
 
-            //int iRowMin = (int)Math.Floor(p.Envelope.Minimum.Y);
-            //int iColMin = (int)Math.Floor(p.Envelope.Minimum.X);
-            //int iRowMax = (int)Math.Ceiling(p.Envelope.Maximum.Y);
-            //int iColMax = (int)Math.Ceiling(p.Envelope.Maximum.X);
+            if (iRowMin >= 0 && iRowMax < _nRows && iColMin >= 0 && iColMax < _nCols)
+            {
+                for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
+                {
+                    for (int jCol = iColMin; jCol <= iColMax; jCol++)
+                    {
+                        //if (p.Intersects() // TODO: Is is faster to add only joint grid cells?
 
-            //if (iRowMin >= 0 && iRowMax < _nRows && iColMin >= 0 && iColMax < _nCols)
-            //{
-            //    for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
-            //    {
-            //        for (int jCol = iColMin; jCol <= iColMax; jCol++)
-            //        {
-            //            if (_grid[iRow][jCol] == null)
-            //                _grid[iRow][jCol] = new List<int>();
+                        if (_grid[iRow][jCol] == null)
+                            _grid[iRow][jCol] = new List<int>();
 
-            //            if (!_grid[iRow][jCol].Contains(index))
-            //                _grid[iRow][jCol].Add(index);
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    throw new IndexOutOfRangeException("Polygon envelope out of bounds");
-            //}
+                        if (!_grid[iRow][jCol].Contains(index))
+                            _grid[iRow][jCol].Add(index);
+                    }
+                }
+            }
+            else
+            {
+                throw new IndexOutOfRangeException("Polygon envelope out of bounds");
+            }
 
         }
 
