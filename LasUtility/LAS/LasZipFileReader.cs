@@ -103,22 +103,22 @@ namespace LasUtility.LAS
 
         public double MinX
         {
-            get { return _lasZip.header.min_x / _lasZip.header.x_scale_factor; }
+            get { return _lasZip.header.min_x; }
         }
 
         public double MinY
         {
-            get { return _lasZip.header.min_y / _lasZip.header.y_scale_factor; }
-
+            get { return _lasZip.header.min_y; }
         }
+
         public double MaxX
         {
-            get { return _lasZip.header.max_x / _lasZip.header.x_scale_factor; }
+            get { return _lasZip.header.max_x; }
         }
 
         public double MaxY
         {
-            get { return _lasZip.header.max_y / _lasZip.header.y_scale_factor; }
+            get { return _lasZip.header.max_y; }
         }
     }
 }

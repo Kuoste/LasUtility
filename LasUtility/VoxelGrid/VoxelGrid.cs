@@ -1,16 +1,16 @@
 ﻿using DotSpatial.Data;
 using DotSpatial.Topology;
+using LasReader.DEM;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LasUtility.DEM;
 
 namespace LasUtility.VoxelGrid
 {
-
-
-    public class VoxelGrid
+    public class VoxelGrid : IHeightMap
     {
         IRasterBounds _bounds;
         Bin[][] _grid;
@@ -29,40 +29,77 @@ namespace LasUtility.VoxelGrid
 
             Bin[][] grid = new Bin[nRows][];
 
-            for (int i = 0; i < grid.Count(); i++)
-                grid[i] = new Bin[nCols];
+            for (int iRow = 0; iRow < grid.Count(); iRow++)
+            {
+                grid[iRow] = new Bin[nCols];
+
+                for (int jCol = 0; jCol < nCols; jCol++)
+                    grid[iRow][jCol] = new Bin();
+            }        
 
             voxelGrid._grid = grid;
 
             return voxelGrid;
         }
 
-        public void Save()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool AddPoint(double x, double y, double z, byte classification)
+        private bool GetIndexes(double x, double y, out int iRow, out int jCol)
         {
             Coordinate coord = new Coordinate(x, y);
             RcIndex rc = _bounds.ProjToCell(coord);
 
-            int iRow = rc.Row;
-            int jCol = rc.Column;
 
-            bool IsAdded = false;
+            iRow = rc.Row;
+            jCol = rc.Column;
+
+            bool InBounds = false;
 
             if ((jCol >= 0 && jCol < nCols && iRow >= 0 && iRow < nRows))
             {
-                if (_grid[iRow][jCol] == null)
-                    _grid[iRow][jCol] = new Bin();
+                InBounds = true;
+            }
 
+            return InBounds;
+
+        }
+
+        public bool AddPoint(double x, double y, double z, byte classification)
+        {
+            int iRow, jCol;
+            bool IsAdded = false;
+
+            if (GetIndexes(x, y, out iRow, out jCol))
+            {
                 _grid[iRow][jCol].AddPoint(z, classification);
-
                 IsAdded = true;
             }
 
             return IsAdded;
+        }
+
+        public void SetMissingHeights(IHeightMap tri)
+        {
+            int nMissingBefore = 0;
+            int nMissingAfter = 0;
+
+            for (int iRow = 0; iRow < nRows; iRow++)
+            {
+                for (int jCol = 0; jCol < nCols; jCol++)
+                {
+
+                    double median = GetGroundMedian(iRow, jCol);
+
+                    if (double.IsNaN(median))
+                    {
+                        nMissingBefore++;
+                        Coordinate center = _bounds.CellCenter_ToProj(iRow, jCol);
+                        median = tri.GetHeight(center.X, center.Y);
+                        _grid[iRow][jCol].ReferenceHeight = median;
+
+                        if (double.IsNaN(median))
+                            nMissingAfter++;
+                    }
+                }
+            }
         }
 
         public void SortFromHighestToLowest()
@@ -81,65 +118,17 @@ namespace LasUtility.VoxelGrid
             return _grid[iRow][jCol].GetGroundMedian();
         }
 
-    }
-
-    internal class Bin
-    {
-        int _referenceHeight;
-        List<BinPoint> groundPoints;
-        List<BinPoint> otherPoints;
-
-        public Bin()
+        public double GetHeight(double x, double y)
         {
-            groundPoints = new List<BinPoint>();
-            otherPoints = new List<BinPoint>();
-        }
+            int iRow, jCol;
+            double ret = double.NaN;
 
-        public void AddPoint(double z, byte classification)
-        {
-            if (classification == 2)
-                groundPoints.Add(new BinPoint() { Z = z });
-            else
-                otherPoints.Add(new BinPoint() { Z = z });
-        }
+            if (GetIndexes(x, y, out iRow, out jCol))
+            {
+                ret = GetGroundMedian(iRow, jCol);
+            }
 
-        public double ReferenceHeight
-        {
-            get { return _referenceHeight / 100D; }
-            set { _referenceHeight = (int)(ReferenceHeight * 100); }
-        }
-
-        public void OrderPointsFromHighestToLowest()
-        {
-
-            groundPoints.Sort();
-            otherPoints.Sort();
-
-            groundPoints.Reverse();
-            otherPoints.Reverse();
-        }
-
-        public double GetGroundMedian()
-        {
-            return groundPoints[groundPoints.Count / 2].Z;
-        }
-    }
-
-    internal class BinPoint : IComparable<BinPoint>
-    {
-        private int _z;
-
-        //public byte Class { get; set; }
-
-        public double Z
-        {
-            get { return _z / 100D; }
-            set { _z = (int)(Z * 100); }
-        }
-
-        public int CompareTo(BinPoint b)
-        {
-            return _z.CompareTo(b._z);
+            return ret;
         }
     }
 }

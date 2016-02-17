@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace LasUtility.DEM
 {
-    public class SurfaceTriangulation
+    public class SurfaceTriangulation : IHeightMap
     {
         List<Vertex> _vertices = new List<Vertex>();
         ITriangulation<Vertex, Cell<Vertex>> _tri;
@@ -64,6 +64,11 @@ namespace LasUtility.DEM
             // todo: Find height from plane. Or from surface formed by adjacent cells.
 
             return ((p.Coordinates[0].Z + p.Coordinates[1].Z + p.Coordinates[2].Z) / 3);
+        }
+
+        public double GetHeight(double x, double y)
+        {
+            return GetValue(x, y);
         }
     }
 }
