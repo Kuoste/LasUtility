@@ -21,19 +21,25 @@ namespace LasUtility.DEM
             _vertices.Add(new Vertex(p.x, p.y, p.z));
         }
 
-        public void Create(int nRows, int nCols)
+        public void Create(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
             if (!_vertices.Any())
                 throw new InvalidOperationException("Add triangulation points before creating triangulation.");
 
-            _tri = Triangulation.CreateDelaunay<Vertex, Cell<Vertex>>(_vertices);
+            TriangulationComputationConfig config = new TriangulationComputationConfig
+            {
+                PointTranslationType = PointTranslationType.None,
+                PlaneDistanceTolerance = 0.00000000001,
+            };
 
-            _grid = new TriangleIndexGrid(nRows, nCols);
+            _tri = Triangulation.CreateDelaunay<Vertex, Cell<Vertex>>(_vertices, config);
+
+            _grid = new TriangleIndexGrid(nRows, nCols, minX, minY, maxX, maxY);
 
             for (int i = 0; i < _tri.Cells.Count(); i++)
             {
                 var c = _tri.Cells.ElementAt(i);
-                _grid.AddIndex(c.GetPolygon(), i);
+                _grid.AddIndex(c.GetPolygon().Envelope, i);
             }
         }
 
@@ -42,7 +48,7 @@ namespace LasUtility.DEM
             if (_grid == null)
                 throw new InvalidOperationException("Triangulation is not created.");
 
-            List<int> indexes = _grid.GetIndexes((int)y, (int)x);
+            List<int> indexes = _grid.GetTriangleIndexesInCell(x, y);
             Point c = new Point(x, y);
 
             foreach (int i in indexes)

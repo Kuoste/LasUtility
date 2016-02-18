@@ -1,12 +1,7 @@
 ﻿using DotSpatial.Data;
 using DotSpatial.Topology;
 using LasReader.DEM;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LasUtility.DEM;
 
 namespace LasUtility.VoxelGrid
 {
@@ -42,24 +37,16 @@ namespace LasUtility.VoxelGrid
             return voxelGrid;
         }
 
-        private bool GetIndexes(double x, double y, out int iRow, out int jCol)
+        private bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
         {
-            Coordinate coord = new Coordinate(x, y);
-            RcIndex rc = _bounds.ProjToCell(coord);
-
-
+            RcIndex rc = _bounds.ProjToCell(new Coordinate(x, y));
             iRow = rc.Row;
             jCol = rc.Column;
 
-            bool InBounds = false;
-
             if ((jCol >= 0 && jCol < nCols && iRow >= 0 && iRow < nRows))
-            {
-                InBounds = true;
-            }
+                return true;
 
-            return InBounds;
-
+            return false;
         }
 
         public bool AddPoint(double x, double y, double z, byte classification)
@@ -67,7 +54,7 @@ namespace LasUtility.VoxelGrid
             int iRow, jCol;
             bool IsAdded = false;
 
-            if (GetIndexes(x, y, out iRow, out jCol))
+            if (GetGridIndexes(x, y, out iRow, out jCol))
             {
                 _grid[iRow][jCol].AddPoint(z, classification);
                 IsAdded = true;
@@ -123,7 +110,7 @@ namespace LasUtility.VoxelGrid
             int iRow, jCol;
             double ret = double.NaN;
 
-            if (GetIndexes(x, y, out iRow, out jCol))
+            if (GetGridIndexes(x, y, out iRow, out jCol))
             {
                 ret = GetGroundMedian(iRow, jCol);
             }
