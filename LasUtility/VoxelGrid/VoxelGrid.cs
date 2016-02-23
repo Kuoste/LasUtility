@@ -2,6 +2,9 @@
 using DotSpatial.Topology;
 using LasReader.DEM;
 using System.Linq;
+using System;
+using System.IO;
+using System.Collections.Generic;
 
 namespace LasUtility.VoxelGrid
 {
@@ -63,7 +66,7 @@ namespace LasUtility.VoxelGrid
             return IsAdded;
         }
 
-        public void SetMissingHeights(IHeightMap tri)
+        public void SetReferenceHeights(IHeightMap tri)
         {
             int nMissingBefore = 0;
             int nMissingAfter = 0;
@@ -72,7 +75,6 @@ namespace LasUtility.VoxelGrid
             {
                 for (int jCol = 0; jCol < nCols; jCol++)
                 {
-
                     double median = GetGroundMedian(iRow, jCol);
 
                     if (double.IsNaN(median))
@@ -80,13 +82,105 @@ namespace LasUtility.VoxelGrid
                         nMissingBefore++;
                         Coordinate center = _bounds.CellCenter_ToProj(iRow, jCol);
                         median = tri.GetHeight(center.X, center.Y);
-                        _grid[iRow][jCol].ReferenceHeight = median;
 
-                        if (double.IsNaN(median))
+                        if (!double.IsNaN(median))
+                            _grid[iRow][jCol].ReferenceHeight = median;
+                        else
                             nMissingAfter++;
                     }
                 }
             }
+        }
+
+        public enum AscSaveMode
+        {
+            GroundMedian,
+            HightestSurface
+        }
+
+        public void SaveAsAsc(string outputFileName, AscSaveMode mode, double noDataValue = -9999D)
+        {
+            switch (mode)
+            {
+                case AscSaveMode.GroundMedian:
+                    SaveAsAscGroundMedian(outputFileName, noDataValue);
+                    break;
+                case AscSaveMode.HightestSurface:
+                    SaveAsAscHightestSurface(outputFileName, noDataValue);
+                    break;
+                default:
+                    throw new Exception("Invalid save mode");
+
+            }
+        }
+
+        private void SaveAsAscHightestSurface(string outputFileName, double noDataValue)
+        {
+            using (StreamWriter file = new StreamWriter(outputFileName))
+            {
+                WriteAscHeader(noDataValue, file);
+
+                foreach (Bin[] row in _grid)
+                {
+                    List<double> heights = new List<double>();
+                    foreach (Bin b in row)
+                    {
+                        if (b.OtherPoints.Any())
+                        {
+                            heights.Add(b.OtherPoints.First().Z);
+                        }
+                        else
+                        {
+                            double median = b.GetGroundMedian();
+                            if (double.IsNaN(median))
+                                median = b.ReferenceHeight;
+
+                            if (Math.Abs(median) < 0.0001)
+                                median = noDataValue;
+
+                            heights.Add(median);
+                        }
+                    }
+
+                    file.WriteLine(String.Join(" ", heights));
+                }
+            }
+        }
+
+        private void SaveAsAscGroundMedian(string outputFileName, double noDataValue)
+        {
+            using (StreamWriter file = new StreamWriter(outputFileName))
+            {
+                WriteAscHeader(noDataValue, file);
+
+                foreach (Bin[] row in _grid)
+                {
+                    List<double> heights = new List<double>();
+                    foreach (Bin b in row)
+                    {
+                        double median = b.GetGroundMedian();
+                        if (double.IsNaN(median))
+                            median = b.ReferenceHeight;
+
+                        if (Math.Abs(median) < 0.0001)
+                            median = noDataValue;
+
+                        heights.Add(median);
+                    }
+
+                    file.WriteLine(String.Join(" ", heights));
+                }
+            }
+        }
+
+        private void WriteAscHeader(double noDataValue, StreamWriter file)
+        {
+            file.WriteLine("ncols         " + nCols);
+            file.WriteLine("nrows         " + nRows);
+            file.WriteLine("xllcorner     " + _bounds.BottomLeft().X);
+            file.WriteLine("yllcorner     " + _bounds.BottomLeft().Y);
+            file.WriteLine("cellsize      " + _bounds.CellWidth);
+            file.WriteLine("NODATA_value  " + noDataValue);
         }
 
         public void SortFromHighestToLowest()
