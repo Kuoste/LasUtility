@@ -15,7 +15,7 @@ namespace LasReader.DEM
         List<int>[][] _grid;
 
         int _nRows, _nCols;
-        readonly IRasterBounds _bounds;
+        public IRasterBounds Bounds { get; private set; }
 
         public TriangleIndexGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
@@ -24,7 +24,7 @@ namespace LasReader.DEM
             _nCols = nCols;
 
             Extent extent = new Extent(minX, minY, maxX, maxY);
-            _bounds = new RasterBounds(nRows, nCols, extent);
+            Bounds = new RasterBounds(nRows, nCols, extent);
 
             for (int i = 0; i < nRows; i++)
                 _grid[i] = new List<int>[nCols];
@@ -32,7 +32,7 @@ namespace LasReader.DEM
 
         private bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
         {
-            RcIndex rc = _bounds.ProjToCell(new Coordinate(x, y));
+            RcIndex rc = Bounds.ProjToCell(new Coordinate(x, y));
             iRow = rc.Row;
             jCol = rc.Column;
 

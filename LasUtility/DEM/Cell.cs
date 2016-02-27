@@ -11,14 +11,21 @@ namespace LasReader.DEM
 {
     internal class Cell<TVertex> : TriangulationCell<TVertex, Cell<TVertex>> where TVertex : Vertex
     {
+        Polygon _polygon;
+
         public Polygon GetPolygon()
         {
-            return new Polygon(new Coordinate[]
+            if (_polygon == null)
             {
-                Vertices[0].Coordinate,
-                Vertices[1].Coordinate,
-                Vertices[2].Coordinate
-            });
+                _polygon = new Polygon(new Coordinate[]
+                {
+                    Vertices[0].Coordinate,
+                    Vertices[1].Coordinate,
+                    Vertices[2].Coordinate,
+                    Vertices[0].Coordinate,
+                });
+            }
+            return _polygon;
         }
     }
 }

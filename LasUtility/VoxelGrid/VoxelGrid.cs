@@ -66,10 +66,10 @@ namespace LasUtility.VoxelGrid
             return IsAdded;
         }
 
-        public void SetReferenceHeights(IHeightMap tri)
+        public void SetReferenceHeights(IHeightMap tri, out int nMissingBefore, out int nMissingAfter)
         {
-            int nMissingBefore = 0;
-            int nMissingAfter = 0;
+            nMissingBefore = 0;
+            nMissingAfter = 0;
 
             for (int iRow = 0; iRow < nRows; iRow++)
             {
@@ -158,14 +158,12 @@ namespace LasUtility.VoxelGrid
                     List<double> heights = new List<double>();
                     foreach (Bin b in row)
                     {
-                        double median = b.GetGroundMedian();
+                        double median = GetGroundMedianOrRerefence(b);
+
                         if (double.IsNaN(median))
-                            median = b.ReferenceHeight;
-
-                        if (Math.Abs(median) < 0.0001)
-                            median = noDataValue;
-
-                        heights.Add(median);
+                            heights.Add(noDataValue);
+                        else
+                            heights.Add(median);
                     }
 
                     file.WriteLine(String.Join(" ", heights));
@@ -192,6 +190,33 @@ namespace LasUtility.VoxelGrid
                     b.OrderPointsFromHighestToLowest();
                 }
             }
+        }
+
+        public List<double> GetOtherPoints(int iRow, int jCol)
+        {
+            List<double> heights = new List<double>();
+
+            foreach (BinPoint p in _grid[iRow][jCol].OtherPoints)
+                heights.Add(p.Z);
+
+            return heights;
+        }
+
+        public double GetGroundMedianOrRerefence(int iRow, int jCol)
+        {
+            return GetGroundMedianOrRerefence(_grid[iRow][jCol]);
+        }
+
+        private double GetGroundMedianOrRerefence(Bin b)
+        {
+            double median = b.GetGroundMedian();
+            if (double.IsNaN(median))
+            {
+                median = b.ReferenceHeight;
+                if (Math.Abs(median) < 0.0001)
+                    median = double.NaN;
+            }
+            return median;
         }
 
         public double GetGroundMedian(int iRow, int jCol)

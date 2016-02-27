@@ -1,4 +1,5 @@
-﻿using DotSpatial.Topology;
+﻿using DotSpatial.Data;
+using DotSpatial.Topology;
 using LasReader.DEM;
 using LasUtility.LAS;
 using MIConvexHull;
@@ -21,20 +22,31 @@ namespace LasUtility.DEM
             _vertices.Add(new Vertex(p.x, p.y, p.z));
         }
 
-        public void Create(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        public void AddPoint(int iRow, int jCol, double z)
+        {
+            Coordinate c = _grid.Bounds.CellCenter_ToProj(iRow, jCol);
+            _vertices.Add(new Vertex(c.X, c.Y, z));
+        }
+
+        public SurfaceTriangulation(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        {
+            _grid = new TriangleIndexGrid(nRows, nCols, minX, minY, maxX, maxY);
+        }
+
+        public void Create()
         {
             if (!_vertices.Any())
                 throw new InvalidOperationException("Add triangulation points before creating triangulation.");
 
             TriangulationComputationConfig config = new TriangulationComputationConfig
             {
-                PointTranslationType = PointTranslationType.None,
-                PlaneDistanceTolerance = 0.00000000001,
+                PointTranslationType = PointTranslationType.TranslateInternal,
+                PlaneDistanceTolerance = 0.000000001,
+                // the translation radius should be lower than PlaneDistanceTolerance / 2
+                PointTranslationGenerator = TriangulationComputationConfig.RandomShiftByRadius(0.0000000001, 0)
             };
 
             _tri = Triangulation.CreateDelaunay<Vertex, Cell<Vertex>>(_vertices, config);
-
-            _grid = new TriangleIndexGrid(nRows, nCols, minX, minY, maxX, maxY);
 
             for (int i = 0; i < _tri.Cells.Count(); i++)
             {
@@ -45,27 +57,35 @@ namespace LasUtility.DEM
 
         public double GetValue(double x, double y)
         {
+            double ret = double.NaN;
+
             if (_grid == null)
                 throw new InvalidOperationException("Triangulation is not created.");
 
             List<int> indexes = _grid.GetTriangleIndexesInCell(x, y);
-            Point c = new Point(x, y);
+            Point point = new Point(x, y);
 
             foreach (int i in indexes)
             {
-                var cell = _tri.Cells.ElementAt(i);
-                Polygon p = cell.GetPolygon();
+                Polygon p = _tri.Cells.ElementAt(i).GetPolygon();
 
-                if (p.Intersects(c))
+                if (IsPointInPolygon(p, point))
                 {
-                    return InterpolateHeightFromPolygon(p, c);
+                    ret =  InterpolateHeightFromPolygon(p, x, y);
+                    break;
                 }
             }
 
-            return double.NaN;
+            return ret;
         }
 
-        private double InterpolateHeightFromPolygon(Polygon p, Point c)
+        private bool IsPointInPolygon(Polygon polygon, Point point)
+        {
+            //return polygon.Contains(point);
+            return polygon.Intersects(point);
+        }
+
+        private double InterpolateHeightFromPolygon(Polygon p, double x, double y)
         {
             // todo: Find height from plane. Or from surface formed by adjacent cells.
 
