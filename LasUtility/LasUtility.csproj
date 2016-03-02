@@ -104,6 +104,7 @@
     <Compile Include="LAS\LasFileReader.cs" />
     <Compile Include="LAS\LasZipFileReader.cs" />
     <Compile Include="LAS\LasPoint.cs" />
+    <Compile Include="LAS\LasZipFileWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VoxelGrid\Bin.cs" />
     <Compile Include="VoxelGrid\VoxelGrid.cs" />
@@ -113,7 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

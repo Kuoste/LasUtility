@@ -28,7 +28,7 @@ namespace LasUtility.LAS
 
         public int OpenReader(string fullFilePath)
         {
-            return  _lasZip.laszip_open_reader(fullFilePath, ref _isCompressed);
+            return _lasZip.laszip_open_reader(fullFilePath, ref _isCompressed);
         }
 
         public void CloseReader()
@@ -62,6 +62,17 @@ namespace LasUtility.LAS
             p.classification = _lasZip.point.classification;
 
             return p;
+        }
+
+        internal laszip_point ReadPointAsLasZipPoint(ref double[] coordinates)
+        {
+            if (GetNextPoint() == false)
+                return null;
+
+            coordinates = new double[3];
+            _lasZip.laszip_get_coordinates(coordinates);
+
+            return _lasZip.point;
         }
 
         private bool GetNextPoint()

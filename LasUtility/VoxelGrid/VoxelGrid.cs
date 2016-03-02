@@ -202,6 +202,19 @@ namespace LasUtility.VoxelGrid
             return heights;
         }
 
+        public List<double> GetOtherPointsByClass(int iRow, int jCol, int classification)
+        {
+            List<double> heights = new List<double>();
+
+            foreach (BinPoint p in _grid[iRow][jCol].OtherPoints)
+            {
+                if (p.Class == classification)
+                    heights.Add(p.Z);
+            }
+
+            return heights;
+        }
+
         public double GetGroundMedianOrRerefence(int iRow, int jCol)
         {
             return GetGroundMedianOrRerefence(_grid[iRow][jCol]);

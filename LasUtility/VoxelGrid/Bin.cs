@@ -12,15 +12,15 @@ namespace LasUtility.VoxelGrid
         public List<BinPoint> GroundPoints { get; private set; }
         public List<BinPoint> OtherPoints { get; private set; }
 
-        public Bin()
-        {
-            GroundPoints = new List<BinPoint>();
-            OtherPoints = new List<BinPoint>();
-        }
-
         public void AddPoint(double z, byte classification)
         {
-            BinPoint point = new BinPoint() { Z = z };
+            if (GroundPoints == null || OtherPoints == null)
+            {
+                GroundPoints = new List<BinPoint>();
+                OtherPoints = new List<BinPoint>();
+            }
+
+            BinPoint point = new BinPoint() { Z = z, Class = classification };
 
             if (classification == 2)
                 GroundPoints.Add(point);
@@ -59,7 +59,7 @@ namespace LasUtility.VoxelGrid
     {
         private int _z;
 
-        //public byte Class { get; set; }
+        public byte Class { get; set; }
 
         public double Z
         {
