@@ -46,6 +46,11 @@ namespace LasUtility.LAS
             CloseReader();
         }
 
+        internal laszip_header GetHeader()
+        {
+            return _lasZip.header;
+        }
+
         public LasPoint ReadPoint()
         {
             LasPoint p = new LasPoint();
@@ -69,7 +74,6 @@ namespace LasUtility.LAS
             if (GetNextPoint() == false)
                 return null;
 
-            coordinates = new double[3];
             _lasZip.laszip_get_coordinates(coordinates);
 
             return _lasZip.point;

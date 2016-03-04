@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LasReader.DEM
+namespace LasUtility.DEM
 {
     internal class Cell<TVertex> : TriangulationCell<TVertex, Cell<TVertex>> where TVertex : Vertex
     {

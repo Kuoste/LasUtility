@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LasReader.DEM
+namespace LasUtility.DEM
 {
     internal class TriangleIndexGrid
     {

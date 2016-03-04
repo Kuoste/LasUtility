@@ -105,7 +105,9 @@
     <Compile Include="LAS\LasZipFileReader.cs" />
     <Compile Include="LAS\LasPoint.cs" />
     <Compile Include="LAS\LasZipFileWriter.cs" />
+    <Compile Include="LAS\LasZipReclassify.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Shapefile\Rasteriser.cs" />
     <Compile Include="VoxelGrid\Bin.cs" />
     <Compile Include="VoxelGrid\VoxelGrid.cs" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 ﻿using DotSpatial.Data;
 using DotSpatial.Topology;
-using LasReader.DEM;
+using LasUtility.DEM;
 using System.Linq;
 using System;
 using System.IO;
@@ -11,7 +11,7 @@ namespace LasUtility.VoxelGrid
     public class VoxelGrid : IHeightMap
     {
         IRasterBounds _bounds;
-        Bin[][] _grid;
+        public Bin[][] _grid;
 
         public int nRows { get; private set; }
         public int nCols { get; private set; }
@@ -192,14 +192,9 @@ namespace LasUtility.VoxelGrid
             }
         }
 
-        public List<double> GetOtherPoints(int iRow, int jCol)
+        public List<BinPoint> GetOtherPoints(int iRow, int jCol)
         {
-            List<double> heights = new List<double>();
-
-            foreach (BinPoint p in _grid[iRow][jCol].OtherPoints)
-                heights.Add(p.Z);
-
-            return heights;
+            return _grid[iRow][jCol].OtherPoints;
         }
 
         public List<double> GetOtherPointsByClass(int iRow, int jCol, int classification)

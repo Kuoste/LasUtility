@@ -6,23 +6,23 @@ using System.Threading.Tasks;
 
 namespace LasUtility.VoxelGrid
 {
-    internal class Bin
+    public class Bin
     {
         int _referenceHeight;
         public List<BinPoint> GroundPoints { get; private set; }
         public List<BinPoint> OtherPoints { get; private set; }
 
+        public Bin()
+        {
+            GroundPoints = new List<BinPoint>();
+            OtherPoints = new List<BinPoint>();
+        }
+
         public void AddPoint(double z, byte classification)
         {
-            if (GroundPoints == null || OtherPoints == null)
-            {
-                GroundPoints = new List<BinPoint>();
-                OtherPoints = new List<BinPoint>();
-            }
-
             BinPoint point = new BinPoint() { Z = z, Class = classification };
 
-            if (classification == 2)
+            if (classification == 2 || (classification >= 70 && classification < 100))
                 GroundPoints.Add(point);
             else
                 OtherPoints.Add(point);
@@ -55,7 +55,7 @@ namespace LasUtility.VoxelGrid
         }
     }
 
-    internal class BinPoint : IComparable<BinPoint>
+    public class BinPoint : IComparable<BinPoint>
     {
         private int _z;
 

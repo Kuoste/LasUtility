@@ -1,6 +1,5 @@
 ﻿using DotSpatial.Data;
 using DotSpatial.Topology;
-using LasReader.DEM;
 using LasUtility.LAS;
 using MIConvexHull;
 using System;

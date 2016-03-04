@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LasReader.DEM
+namespace LasUtility.DEM
 {
     public interface IHeightMap
     {
