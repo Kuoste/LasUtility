@@ -50,7 +50,8 @@ namespace LasUtility.LAS
                     }
                     else
                     {
-                        p.classification = (byte)classValue;
+                        if (p.return_number == p.number_of_returns_of_given_pulse)
+                            p.classification = (byte)classValue;
                     }
                 }
 
