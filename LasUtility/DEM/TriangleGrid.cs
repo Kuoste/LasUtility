@@ -19,15 +19,23 @@ namespace LasUtility.DEM
 
         public TriangleIndexGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
-            _grid = new List<int>[nRows][];
             _nRows = nRows;
             _nCols = nCols;
 
             Extent extent = new Extent(minX, minY, maxX, maxY);
             Bounds = new RasterBounds(nRows, nCols, extent);
+        }
 
-            for (int i = 0; i < nRows; i++)
-                _grid[i] = new List<int>[nCols];
+        public void ResetGrid()
+        {
+            _grid = new List<int>[_nRows][];
+            for (int i = 0; i < _nRows; i++)
+                _grid[i] = new List<int>[_nCols];
+        }
+
+        private void CreateGrid()
+        {
+            ResetGrid();
         }
 
         private bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
@@ -56,10 +64,12 @@ namespace LasUtility.DEM
             return _grid[iRow][jCol];
         }
 
-
         public void AddIndex(IEnvelope e, int index)
         {
             int iRowMin, iColMin, iRowMax, iColMax;
+
+            if (_grid == null)
+                CreateGrid();
 
             bool minInBounds = GetGridIndexes(e.Minimum.X, 
                 e.Maximum.Y, out iRowMin, out iColMin);

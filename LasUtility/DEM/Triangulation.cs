@@ -18,13 +18,13 @@ namespace LasUtility.DEM
 
         public void AddPoint(LasPoint p)
         {
-            _vertices.Add(new Vertex(p.x, p.y, p.z));
+            _vertices.Add(new Vertex(p.x, p.y, p.z, p.classification));
         }
 
-        public void AddPoint(int iRow, int jCol, double z)
+        public void AddPoint(int iRow, int jCol, double z, byte classification)
         {
             Coordinate c = _grid.Bounds.CellCenter_ToProj(iRow, jCol);
-            _vertices.Add(new Vertex(c.X, c.Y, z));
+            _vertices.Add(new Vertex(c.X, c.Y, z, classification));
         }
 
         public SurfaceTriangulation(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
@@ -36,6 +36,8 @@ namespace LasUtility.DEM
         {
             if (!_vertices.Any())
                 throw new InvalidOperationException("Add triangulation points before creating triangulation.");
+
+            _grid.ResetGrid();
 
             TriangulationComputationConfig config = new TriangulationComputationConfig
             {
@@ -54,9 +56,10 @@ namespace LasUtility.DEM
             }
         }
 
-        public double GetValue(double x, double y)
+        public double GetValue(double x, double y, out byte classification)
         {
             double ret = double.NaN;
+            classification = 0;
 
             if (_grid == null)
                 throw new InvalidOperationException("Triangulation is not created.");
@@ -71,11 +74,31 @@ namespace LasUtility.DEM
                 if (IsPointInPolygon(p, point))
                 {
                     ret =  InterpolateHeightFromPolygon(p, x, y);
+                    point.Z = ret;
+                    classification = GetClosestVertex(point, _tri.Cells.ElementAt(i).Vertices).Class;
                     break;
                 }
             }
 
             return ret;
+        }
+
+        private Vertex GetClosestVertex(Point point, Vertex[] vertices)
+        {
+            Vertex nearest = null;
+            double minDistance = double.MaxValue;
+
+            foreach (Vertex vertex in vertices)
+            {
+                double distance = point.HyperDistance(vertex.Coordinate);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    nearest = vertex;
+                }
+            }
+
+            return nearest;
         }
 
         private bool IsPointInPolygon(Polygon polygon, Point point)
@@ -91,9 +114,15 @@ namespace LasUtility.DEM
             return ((p.Coordinates[0].Z + p.Coordinates[1].Z + p.Coordinates[2].Z) / 3);
         }
 
+        public double GetHeightAndClass(double x, double y, out byte classification)
+        {
+            return GetValue(x, y, out classification);
+        }
+
         public double GetHeight(double x, double y)
         {
-            return GetValue(x, y);
+            byte classification;
+            return GetValue(x, y, out classification);
         }
     }
 }

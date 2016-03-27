@@ -8,8 +8,8 @@ namespace LasUtility.VoxelGrid
 {
     public class Bin
     {
-        int _groundReferenceHeight;
-        int _surfaceReferenceHeight;
+        public BinPoint SurfaceReference { get; set; }
+        public BinPoint GroundReference { get; set; }
 
         public List<BinPoint> GroundPoints { get; private set; }
         public List<BinPoint> OtherPoints { get; private set; }
@@ -20,26 +20,14 @@ namespace LasUtility.VoxelGrid
             OtherPoints = new List<BinPoint>();
         }
 
-        public void AddPoint(double z, byte classification)
+        public void AddPoint(double z, byte classification, bool IsGroundPoint)
         {
             BinPoint point = new BinPoint() { Z = z, Class = classification };
 
-            if (classification == 2)
+            if (IsGroundPoint)
                 GroundPoints.Add(point);
             else
                 OtherPoints.Add(point);
-        }
-
-        public double GroundReferenceHeight
-        {
-            get { return _groundReferenceHeight / 100D; }
-            set { _groundReferenceHeight = (int)(value * 100); }
-        }
-
-        public double SurfaceReferenceHeight
-        {
-            get { return _surfaceReferenceHeight / 100D; }
-            set { _surfaceReferenceHeight = (int)(value * 100); }
         }
 
         public void OrderPointsFromHighestToLowest()
@@ -60,6 +48,16 @@ namespace LasUtility.VoxelGrid
                 ret = GroundPoints[GroundPoints.Count / 2].Z;
 
             return ret;
+        }
+
+        public BinPoint GetGroundMedianPoint()
+        {
+            BinPoint p = null;
+
+            if (GroundPoints.Any())
+                p = GroundPoints[GroundPoints.Count / 2];
+
+            return p;
         }
     }
 

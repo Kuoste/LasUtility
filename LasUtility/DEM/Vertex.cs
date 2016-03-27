@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace LasUtility.DEM
 {
-    internal class Vertex : IVertex
+    internal class Vertex : IVertex, IComparable<Vertex>
     {
         double[] _positionXY;
 
         public double Height { get; set; }
+        public byte Class { get; set; }
 
         public double[] Position
         {
@@ -35,10 +36,16 @@ namespace LasUtility.DEM
         }
 
 
-        public Vertex(double x, double y, double z)
+        public Vertex(double x, double y, double z, byte classification)
         {
             Position = new double[] { x, y };
             Height = z;
+            Class = classification;
+        }
+
+        public int CompareTo(Vertex other)
+        {
+            return Height.CompareTo(other.Height);
         }
 
 
