@@ -15,15 +15,15 @@ namespace LasUtility.Shapefile
         const double _resolution = 1D;
         const int _noDataValue = 0;
 
-        Dictionary<int, sbyte> _nlsPolygonClasses;
-        Dictionary<int, sbyte> _nlsLineClasses;
+        Dictionary<int, byte> _nlsPolygonClasses;
+        Dictionary<int, byte> _nlsLineClasses;
 
-        sbyte[][] _raster;
+        byte[][] _raster;
         IRasterBounds _bounds;
 
         public Rasteriser()
         {
-            _nlsPolygonClasses = new Dictionary<int, sbyte>()
+            _nlsPolygonClasses = new Dictionary<int, byte>()
             {
                 {42210, 100},  //	Asuinrakennus, ? krs
                 {42211, 101},  //	Asuinrakennus, 1-2 krs
@@ -44,9 +44,17 @@ namespace LasUtility.Shapefile
                 {42260, 116},  //	Muu rakennus, ? krs
                 {42261, 117},  //	Muu rakennus, 1-2 krs
                 {42262, 118},  //	Muu rakennus, 3-n krs
+
+                //{36200, 130},  //	Järvivesi
+                //{36211, 131},  //	Merivesi
+                //{35411, 135},  //	Suo, helppokulkuinen puuton 
+                //{35412, 136},  //	Suo, helppokulkuinen metsää kasvava 
+                //{35421, 137},  //	Suo, vaikeakulkuinen puuton 
+                //{35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava 
+
             };
 
-            _nlsLineClasses = new Dictionary<int, sbyte>()
+            _nlsLineClasses = new Dictionary<int, byte>()
             {
                 {12111, 70}, //Autotie Ia // mc id 44
                 {12112, 72}, //Autotie Ib
@@ -63,6 +71,9 @@ namespace LasUtility.Shapefile
                 {12313, 88}, //Polku
                 {12314, 86}, //Kävely- ja pyörätie
                 {12316, 84}  //Ajopolku
+
+                //{36311, 50}, //Virtavesi, alle 2m
+                //{36312, 51}  //Virtavesi, 2-5m
             };
         }
 
@@ -78,14 +89,13 @@ namespace LasUtility.Shapefile
 
             Console.WriteLine("File {0} contains {1} shapes", Path.GetFileName(filename), nShapes);
             int nAdded = 0;
-            long nCellsModified = 0;
 
             for (int i = 0; i < nShapes; i++)
             {
                 Shape shape = fs.GetShape(i, true);
 
                 int classification = (int)(long)shape.Attributes[2];
-                sbyte rasterValue;
+                byte rasterValue;
 
                 if (_nlsPolygonClasses.ContainsKey(classification))
                     rasterValue = _nlsPolygonClasses[classification];
@@ -109,13 +119,17 @@ namespace LasUtility.Shapefile
                 //}
 
                 nAdded++;
-                SetValueIfInside(iMin.Row, iMax.Row, iMin.Column, iMax.Column, geometry, rasterValue);
-            }
+                SetValueIfInside(iMin.Row - 1, iMax.Row + 1, iMin.Column - 1, iMax.Column + 1, geometry, rasterValue);
 
-            Console.WriteLine("  of which {0} were added to {1} cells", nAdded, nCellsModified);
+                if (i % (nShapes / 20) == 0)
+                    Console.Write(".");
+            }
+            Console.Write(Environment.NewLine);
+
+            Console.WriteLine("  of which {0} were added", nAdded);
         }
 
-        private void SetValueIfInside(int iRowMin, int iRowMax, int jColMin, int jColMax, IGeometry geometry, sbyte rasterValue)
+        private void SetValueIfInside(int iRowMin, int iRowMax, int jColMin, int jColMax, IGeometry geometry, byte rasterValue)
         {
             Coordinate min = new Coordinate(_bounds.CellCenter_ToProj(iRowMin, jColMax));
             Coordinate max = new Coordinate(_bounds.CellCenter_ToProj(iRowMax, jColMin));
@@ -126,17 +140,22 @@ namespace LasUtility.Shapefile
             {
                 if (((iRowMax - iRowMin) < 2 && (jColMax - jColMin) < 2) || geometry.Contains(rect))
                 {
-                    if (rasterValue >= 70 && rasterValue < 100)
+                    if (rasterValue >= 50 && rasterValue < 100)
                     {
-                        if (iRowMin > 0)
-                            iRowMin--;
-                        if (jColMin > 0)
-                            jColMin--;
-                        if (jColMax < _bounds.NumColumns - 1)
-                            jColMax++;
-                        if (iRowMax < _bounds.NumRows - 1)
-                            iRowMax++;
+                        iRowMin--;
+                        jColMin--;
+                        jColMax++;
+                        iRowMax++;
                     }
+
+                    if (iRowMin < 0)
+                        iRowMin = 0;
+                    if (jColMin < 0)
+                        jColMin = 0;
+                    if (jColMax > _bounds.NumColumns - 1)
+                        jColMax = _bounds.NumColumns - 1;
+                    if (iRowMax > _bounds.NumRows - 1)
+                        iRowMax = _bounds.NumColumns - 1;
 
                     for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
                     {
@@ -180,7 +199,7 @@ namespace LasUtility.Shapefile
                 file.WriteLine("cellsize      " + _bounds.CellWidth);
                 file.WriteLine("NODATA_value  " + _noDataValue);
 
-                foreach (sbyte[] row in _raster)
+                foreach (byte[] row in _raster)
                     file.WriteLine(String.Join(" ", row));
             }
         }
@@ -240,7 +259,7 @@ namespace LasUtility.Shapefile
                                 fullFileName, words.Count(), nRows - 1 - iRow));
                         }
 
-                        ras._raster[iRow] = Array.ConvertAll(words, sbyte.Parse);
+                        ras._raster[iRow] = Array.ConvertAll(words, byte.Parse);
                         iRow++;
                     }
 
@@ -257,11 +276,11 @@ namespace LasUtility.Shapefile
         private void CreaterRaster(Extent extent)
         {
             _bounds = new RasterBounds((int)extent.Height, (int)extent.Width, extent);
-            _raster = new sbyte[_bounds.NumRows][];
+            _raster = new byte[_bounds.NumRows][];
 
             for (int iRow = 0; iRow < _bounds.NumRows; iRow++)
             {
-                _raster[iRow] = new sbyte[_bounds.NumColumns];
+                _raster[iRow] = new byte[_bounds.NumColumns];
                 for (int jCol = 0; jCol < _bounds.NumColumns; jCol++)
                     _raster[iRow][jCol] = _noDataValue;
             }

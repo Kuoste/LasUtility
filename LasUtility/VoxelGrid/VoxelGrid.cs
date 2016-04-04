@@ -27,6 +27,14 @@ namespace LasUtility.VoxelGrid
 
             Bin[][] grid = new Bin[nRows][];
 
+            //Console.WriteLine("Lowes index center coords are x " 
+            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).X + " y " 
+            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).Y);
+
+            //Console.WriteLine("Lowes index center coords are x "
+            //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).X + " y "
+            //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).Y);
+
             for (int iRow = 0; iRow < grid.Count(); iRow++)
             {
                 grid[iRow] = new Bin[nCols];
@@ -205,13 +213,13 @@ namespace LasUtility.VoxelGrid
             return _grid[iRow][jCol].OtherPoints;
         }
 
-        public List<double> GetOtherPointsByClass(int iRow, int jCol, int classification)
+        public List<double> GetOtherPointsByClassRange(int iRow, int jCol, int lowestClass, int highestClass)
         {
             List<double> heights = new List<double>();
 
             foreach (BinPoint p in _grid[iRow][jCol].OtherPoints)
             {
-                if (p.Class == classification)
+                if (p.Class >= lowestClass && p.Class <= highestClass)
                     heights.Add(p.Z);
             }
 

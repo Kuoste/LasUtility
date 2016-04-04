@@ -69,13 +69,13 @@ namespace LasUtility.DEM
 
             foreach (int i in indexes)
             {
-                Polygon p = _tri.Cells.ElementAt(i).GetPolygon();
+                var cell = _tri.Cells.ElementAt(i);
 
-                if (IsPointInPolygon(p, point))
+                if (IsPointInPolygon(cell.GetPolygon(), point))
                 {
-                    ret =  InterpolateHeightFromPolygon(p, x, y);
+                    ret = InterpolateHeightFromPolygon(cell.GetPolygon(), x, y);
                     point.Z = ret;
-                    classification = GetClosestVertex(point, _tri.Cells.ElementAt(i).Vertices).Class;
+                    classification = GetClosestVertex(point, cell.Vertices).Class;
                     break;
                 }
             }
@@ -109,9 +109,17 @@ namespace LasUtility.DEM
 
         private double InterpolateHeightFromPolygon(Polygon p, double x, double y)
         {
-            // todo: Find height from plane. Or from surface formed by adjacent cells.
+            Coordinate p1 = p.Coordinates[0];
+            Coordinate p2 = p.Coordinates[1];
+            Coordinate p3 = p.Coordinates[2];
 
-            return ((p.Coordinates[0].Z + p.Coordinates[1].Z + p.Coordinates[2].Z) / 3);
+            double det = (p2.Y - p3.Y) * (p1.X - p3.X) + (p3.X - p2.X) * (p1.Y - p3.Y);
+
+            double l1 = ((p2.Y - p3.Y) * (x - p3.X) + (p3.X - p2.X) * (y - p3.Y)) / det;
+            double l2 = ((p3.Y - p1.Y) * (x - p3.X) + (p1.X - p3.X) * (y - p3.Y)) / det;
+            double l3 = 1.0f - l1 - l2;
+
+            return l1 * p1.Z + l2 * p2.Z + l3 * p3.Z;
         }
 
         public double GetHeightAndClass(double x, double y, out byte classification)
