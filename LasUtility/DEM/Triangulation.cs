@@ -16,6 +16,14 @@ namespace LasUtility.DEM
         ITriangulation<Vertex, Cell<Vertex>> _tri;
         TriangleIndexGrid _grid;
 
+        public void Clear()
+        {
+            _tri = null;
+            _vertices.Clear();
+            _grid.ResetGrid();
+            _grid = null;
+        }
+
         public void AddPoint(LasPoint p)
         {
             _vertices.Add(new Vertex(p.x, p.y, p.z, p.classification));
@@ -132,5 +140,7 @@ namespace LasUtility.DEM
             byte classification;
             return GetValue(x, y, out classification);
         }
+
+
     }
 }

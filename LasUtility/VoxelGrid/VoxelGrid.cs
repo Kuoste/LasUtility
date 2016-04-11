@@ -27,13 +27,29 @@ namespace LasUtility.VoxelGrid
 
             Bin[][] grid = new Bin[nRows][];
 
-            //Console.WriteLine("Lowes index center coords are x " 
-            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).X + " y " 
+            //Console.WriteLine("Lowes index center coords are x "
+            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).X + " y "
             //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).Y);
 
-            //Console.WriteLine("Lowes index center coords are x "
+            //Console.WriteLine("Lowest index bottomleft coords are x "
+            //    + voxelGrid._bounds.CellBottomLeft_ToProj(0, 0).X + " y "
+            //    + voxelGrid._bounds.CellBottomLeft_ToProj(0, 0).Y);
+
+            //Console.WriteLine("Lowest index topright coords are x "
+            //    + voxelGrid._bounds.CellTopRight_ToProj(0, 0).X + " y "
+            //    + voxelGrid._bounds.CellTopRight_ToProj(0, 0).Y);
+
+            //Console.WriteLine("Highest index center coords are x "
             //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).X + " y "
             //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).Y);
+
+            //Console.WriteLine("Highest index bottomleft coords are x "
+            //    + voxelGrid._bounds.CellBottomLeft_ToProj(nRows - 1, nCols - 1).X + " y "
+            //    + voxelGrid._bounds.CellBottomLeft_ToProj(nRows - 1, nCols - 1).Y);
+
+            //Console.WriteLine("Highest index topright coords are x "
+            //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).X + " y "
+            //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).Y);
 
             for (int iRow = 0; iRow < grid.Count(); iRow++)
             {
@@ -60,6 +76,14 @@ namespace LasUtility.VoxelGrid
             return false;
         }
 
+        public void GetGridCoordinates(int iRow, int jCol, out double x, out double y)
+        {
+            Coordinate c = _bounds.CellBottomLeft_ToProj(iRow, jCol);
+
+            x = c.X;
+            y = c.Y;
+        }
+
         public bool AddPoint(double x, double y, double z, byte classification, bool IsGroundPoint)
         {
             int iRow, jCol;
@@ -74,15 +98,23 @@ namespace LasUtility.VoxelGrid
             return IsAdded;
         }
 
-        private void SetReferenceHeights(SurfaceTriangulation tri, bool isGround, out int nMissingBefore, out int nMissingAfter)
+        private void SetReferenceHeights(SurfaceTriangulation tri, bool isGround, 
+            double minX, double minY, double maxX, double maxY, 
+            out int nMissingBefore, out int nMissingAfter)
         {
             nMissingBefore = 0;
             nMissingAfter = 0;
             byte classification;
 
-            for (int iRow = 0; iRow < nRows; iRow++)
+            RcIndex rcMin = _bounds.ProjToCell(new Coordinate(minX, maxY));
+            RcIndex rcMax = _bounds.ProjToCell(new Coordinate(maxX, minY));
+
+            if (rcMin == RcIndex.Empty || rcMax == RcIndex.Empty)
+                throw new Exception();
+
+            for (int iRow = rcMin.Row; iRow < rcMax.Row; iRow++)
             {
-                for (int jCol = 0; jCol < nCols; jCol++)
+                for (int jCol = rcMin.Column; jCol < rcMax.Column; jCol++)
                 {
                     double median = GetGroundMedian(iRow, jCol);
 
@@ -112,14 +144,16 @@ namespace LasUtility.VoxelGrid
             }
         }
 
-        public void SetGroundReferenceHeights(SurfaceTriangulation tri, out int nMissingBefore, out int nMissingAfter)
+        public void SetGroundReferenceHeights(SurfaceTriangulation tri, double minX, double minY, double maxX, double maxY,
+            out int nMissingBefore, out int nMissingAfter)
         {
-            SetReferenceHeights(tri, true, out nMissingBefore, out nMissingAfter);
+            SetReferenceHeights(tri, true, minX, minY, maxX, maxY, out nMissingBefore, out nMissingAfter);
         }
 
-        public void SetSurfaceReferenceHeights(SurfaceTriangulation tri, out int nMissingBefore, out int nMissingAfter)
+        public void SetSurfaceReferenceHeights(SurfaceTriangulation tri, double minX, double minY, double maxX, double maxY,
+            out int nMissingBefore, out int nMissingAfter)
         {
-            SetReferenceHeights(tri, false, out nMissingBefore, out nMissingAfter);
+            SetReferenceHeights(tri, false, minX, minY, maxX, maxY, out nMissingBefore, out nMissingAfter);
         }
 
         public void SaveAsAscHighestInClassRange(string outputFileName, int lowestClass, int highestClass, double noDataValue = -9999)
