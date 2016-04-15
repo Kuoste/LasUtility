@@ -4,6 +4,7 @@ using LasUtility.LAS;
 using MIConvexHull;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -62,6 +63,30 @@ namespace LasUtility.DEM
                 var c = _tri.Cells.ElementAt(i);
                 _grid.AddIndex(c.GetPolygon().Envelope, i);
             }
+        }
+
+        public void ExportToShp(string shpFilePath)
+        {
+            FeatureSet fs = new FeatureSet(FeatureType.Polygon);
+
+            fs.DataTable.Columns.Add(new DataColumn("ID", typeof(int)));
+            //fs.DataTable.Columns.Add(new DataColumn("Text", typeof(string)));
+
+            for (int i = 0; i < _tri.Cells.Count(); i++)
+            {
+                var c = _tri.Cells.ElementAt(i);
+
+                IFeature feature = fs.AddFeature(c.GetPolygon());
+
+                feature.DataRow.BeginEdit();
+                feature.DataRow["ID"] = i;
+                //feature.DataRow["Text"] = "Hello World";
+                feature.DataRow.EndEdit();
+
+            }
+
+            // save the feature set
+            fs.SaveAs(shpFilePath, true);
         }
 
         public double GetValue(double x, double y, out byte classification)
