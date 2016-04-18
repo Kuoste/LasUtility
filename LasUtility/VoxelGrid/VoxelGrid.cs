@@ -91,6 +91,9 @@ namespace LasUtility.VoxelGrid
 
             if (GetGridIndexes(x, y, out iRow, out jCol))
             {
+                if (z < 0)
+                    z = 0;
+
                 _grid[iRow][jCol].AddPoint(z, classification, IsGroundPoint);
                 IsAdded = true;
             }

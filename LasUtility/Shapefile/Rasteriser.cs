@@ -45,12 +45,12 @@ namespace LasUtility.Shapefile
                 {42261, 117},  //	Muu rakennus, 1-2 krs
                 {42262, 118},  //	Muu rakennus, 3-n krs
 
-                //{36200, 130},  //	Järvivesi
-                //{36211, 131},  //	Merivesi
-                //{35411, 135},  //	Suo, helppokulkuinen puuton 
-                //{35412, 136},  //	Suo, helppokulkuinen metsää kasvava 
-                //{35421, 137},  //	Suo, vaikeakulkuinen puuton 
-                //{35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava 
+                {36200, 130},  //	Järvivesi
+                {36211, 131},  //	Merivesi
+                {35411, 135},  //	Suo, helppokulkuinen puuton 
+                {35412, 136},  //	Suo, helppokulkuinen metsää kasvava 
+                {35421, 137},  //	Suo, vaikeakulkuinen puuton 
+                {35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava 
 
             };
 

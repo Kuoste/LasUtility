@@ -48,6 +48,10 @@ namespace LasUtility.DEM
             return Height.CompareTo(other.Height);
         }
 
+        public override string ToString()
+        {
+            return "(x" + _positionXY[0] + " y " + _positionXY[1] + " z " + Height + " class " + Class + ")";
+        }
 
 
         //protected override Geometry DefiningGeometry

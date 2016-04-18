@@ -103,13 +103,19 @@ namespace LasUtility.DEM
             foreach (int i in indexes)
             {
                 var cell = _tri.Cells.ElementAt(i);
-
-                if (IsPointInPolygon(cell.GetPolygon(), point))
+                try
                 {
-                    ret = InterpolateHeightFromPolygon(cell.GetPolygon(), x, y);
-                    point.Z = ret;
-                    classification = GetClosestVertex(point, cell.Vertices).Class;
-                    break;
+                    if (IsPointInPolygon(cell.GetPolygon(), point))
+                    {
+                        ret = InterpolateHeightFromPolygon(cell.GetPolygon(), x, y);
+                        point.Z = ret;
+                        classification = GetClosestVertex(point, cell.Vertices).Class;
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e + " Coords are " + String.Join(", ", cell.Vertices as IEnumerable<Vertex>));
                 }
             }
 
