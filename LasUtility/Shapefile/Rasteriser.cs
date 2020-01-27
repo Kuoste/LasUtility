@@ -78,14 +78,29 @@ namespace LasUtility.Shapefile
         }
 
 
+        public void InitializeRaster(string[] filenames)
+        {
+            Extent extent = null;
+
+            foreach (var filename in filenames)
+            {
+                IFeatureSet fs = FeatureSet.Open(filename);
+
+                if (extent == null)
+                    extent = fs.Extent;
+                else
+                    extent.ExpandToInclude(fs.Extent);
+            }
+
+            CreaterRaster(extent);
+        } 
+
+
 
         public void AddShapefile(string filename)
         {
             IFeatureSet fs = FeatureSet.Open(filename);
             int nShapes = fs.NumRows();
-
-            if (_raster == null)
-                CreaterRaster(fs.Extent);
 
             Console.WriteLine("File {0} contains {1} shapes", Path.GetFileName(filename), nShapes);
             int nAdded = 0;
@@ -138,7 +153,7 @@ namespace LasUtility.Shapefile
 
             if (geometry.Intersects(rect))
             {
-                if (((iRowMax - iRowMin) < 2 && (jColMax - jColMin) < 2) || geometry.Contains(rect))
+                if (((iRowMax - iRowMin) < 2 || (jColMax - jColMin) < 2) || geometry.Contains(rect))
                 {
                     if (rasterValue >= 50 && rasterValue < 100)
                     {
@@ -155,7 +170,7 @@ namespace LasUtility.Shapefile
                     if (jColMax > _bounds.NumColumns - 1)
                         jColMax = _bounds.NumColumns - 1;
                     if (iRowMax > _bounds.NumRows - 1)
-                        iRowMax = _bounds.NumColumns - 1;
+                        iRowMax = _bounds.NumRows - 1;
 
                     for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
                     {
@@ -229,11 +244,11 @@ namespace LasUtility.Shapefile
                         else if (words[0].ToUpper().Trim() == "NROWS")
                             nRows = int.Parse(words[1]);
                         else if (words[0].ToUpper().Trim() == "XLLCORNER")
-                            minX = int.Parse(words[1]);
+                            minX = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
                         else if (words[0].ToUpper().Trim() == "YLLCORNER")
-                            minY = int.Parse(words[1]);
+                            minY = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
                         else if (words[0].ToUpper().Trim() == "CELLSIZE")
-                            cellSize = int.Parse(words[1]);
+                            cellSize = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
                         else if (words[0].ToUpper().Trim() == "NODATA_VALUE")
                             noDataValue = int.Parse(words[1]);
                         else
@@ -292,7 +307,7 @@ namespace LasUtility.Shapefile
 
             if (rc == RcIndex.Empty)
             {
-                Console.WriteLine("Coordinate out of bounds " + x + " " + y);
+               // Console.WriteLine("Coordinate out of bounds " + x + " " + y);
                 return double.NaN;
             }
 
