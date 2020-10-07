@@ -63,11 +63,11 @@ namespace LasUtility.Shapefile
                 {12131, 78}, //Autotie IIIa
                 {12132, 80}, //Autotie IIIb
                 {12141, 82}, //Ajotie
-                {12151, 99}, //Lautta
-                {12152, 99}, //Lossi
-                {12153, 99}, //Huoltoaukko ilman puomia
-                {12154, 99}, //Huoltoaukko puomilla
-                {12312, 99}, //Talvitie
+                //{12151, 99}, //Lautta
+                //{12152, 99}, //Lossi
+                //{12153, 99}, //Huoltoaukko ilman puomia
+                //{12154, 99}, //Huoltoaukko puomilla
+                //{12312, 99}, //Talvitie
                 {12313, 88}, //Polku
                 {12314, 86}, //Kävely- ja pyörätie
                 {12316, 84}  //Ajopolku
@@ -153,7 +153,7 @@ namespace LasUtility.Shapefile
 
             if (geometry.Intersects(rect))
             {
-                if (((iRowMax - iRowMin) < 2 || (jColMax - jColMin) < 2) || geometry.Contains(rect))
+                if (((iRowMax - iRowMin) < 2 && (jColMax - jColMin) < 2) || geometry.Contains(rect))
                 {
                     if (rasterValue >= 50 && rasterValue < 100)
                     {
@@ -167,14 +167,14 @@ namespace LasUtility.Shapefile
                         iRowMin = 0;
                     if (jColMin < 0)
                         jColMin = 0;
-                    if (jColMax > _bounds.NumColumns - 1)
-                        jColMax = _bounds.NumColumns - 1;
-                    if (iRowMax > _bounds.NumRows - 1)
-                        iRowMax = _bounds.NumRows - 1;
+                    if (jColMax > _bounds.NumColumns)
+                        jColMax = _bounds.NumColumns;
+                    if (iRowMax > _bounds.NumRows)
+                        iRowMax = _bounds.NumRows;
 
-                    for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
+                    for (int iRow = iRowMin; iRow < iRowMax; iRow++)
                     {
-                        for (int jCol = jColMin; jCol <= jColMax; jCol++)
+                        for (int jCol = jColMin; jCol < jColMax; jCol++)
                         {
                             _raster[iRow][jCol] = rasterValue;
                         }
