@@ -12,7 +12,6 @@ namespace LasUtility.Shapefile
 {
     public class Rasteriser : IHeightMap
     {
-        const double _resolution = 1D;
         const int _noDataValue = 0;
 
         Dictionary<int, byte> _nlsPolygonClasses;
@@ -45,32 +44,32 @@ namespace LasUtility.Shapefile
                 {42261, 117},  //	Muu rakennus, 1-2 krs
                 {42262, 118},  //	Muu rakennus, 3-n krs
 
-                {36200, 130},  //	Järvivesi
-                {36211, 131},  //	Merivesi
-                {35411, 135},  //	Suo, helppokulkuinen puuton 
-                {35412, 136},  //	Suo, helppokulkuinen metsää kasvava 
-                {35421, 137},  //	Suo, vaikeakulkuinen puuton 
-                {35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava 
+                //{36200, 130},  //	Järvivesi
+                //{36211, 131},  //	Merivesi
+                //{35411, 135},  //	Suo, helppokulkuinen puuton 
+                //{35412, 136},  //	Suo, helppokulkuinen metsää kasvava 
+                //{35421, 137},  //	Suo, vaikeakulkuinen puuton 
+                //{35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava 
 
             };
 
             _nlsLineClasses = new Dictionary<int, byte>()
             {
-                {12111, 70}, //Autotie Ia // mc id 44
-                {12112, 72}, //Autotie Ib
-                {12121, 74}, //Autotie IIa
-                {12122, 76}, //Autotie IIb
-                {12131, 78}, //Autotie IIIa
-                {12132, 80}, //Autotie IIIb
-                {12141, 82}, //Ajotie
+                //{12111, 70}, //Autotie Ia // mc id 44
+                //{12112, 72}, //Autotie Ib
+                //{12121, 74}, //Autotie IIa
+                //{12122, 76}, //Autotie IIb
+                //{12131, 78}, //Autotie IIIa
+                //{12132, 80}, //Autotie IIIb
+                //{12141, 82}, //Ajotie
                 //{12151, 99}, //Lautta
                 //{12152, 99}, //Lossi
                 //{12153, 99}, //Huoltoaukko ilman puomia
                 //{12154, 99}, //Huoltoaukko puomilla
                 //{12312, 99}, //Talvitie
-                {12313, 88}, //Polku
-                {12314, 86}, //Kävely- ja pyörätie
-                {12316, 84}  //Ajopolku
+                //{12313, 88}, //Polku
+                //{12314, 86}, //Kävely- ja pyörätie
+                //{12316, 84}  //Ajopolku
 
                 //{36311, 50}, //Virtavesi, alle 2m
                 //{36312, 51}  //Virtavesi, 2-5m
@@ -91,6 +90,12 @@ namespace LasUtility.Shapefile
                 else
                     extent.ExpandToInclude(fs.Extent);
             }
+
+            // Expand to integer values to get cell size 1.0000000 meters and move by 0.5 m because extent tells the cell center.
+            extent.MinY = Math.Floor(extent.MinY);
+            extent.MinX = Math.Floor(extent.MinX);
+            extent.MaxY = Math.Ceiling(extent.MaxY);
+            extent.MaxX = Math.Ceiling(extent.MaxX);
 
             CreaterRaster(extent);
         } 
