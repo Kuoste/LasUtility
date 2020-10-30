@@ -1,6 +1,8 @@
 ﻿using DotSpatial.Data;
+using DotSpatial.Symbology;
 using DotSpatial.Topology;
 using LasUtility.DEM;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -55,21 +57,21 @@ namespace LasUtility.Shapefile
 
             _nlsLineClasses = new Dictionary<int, byte>()
             {
-                //{12111, 70}, //Autotie Ia // mc id 44
-                //{12112, 72}, //Autotie Ib
-                //{12121, 74}, //Autotie IIa
-                //{12122, 76}, //Autotie IIb
-                //{12131, 78}, //Autotie IIIa
-                //{12132, 80}, //Autotie IIIb
-                //{12141, 82}, //Ajotie
+                {12111, 70}, //Autotie Ia // mc id 44
+                {12112, 72}, //Autotie Ib
+                {12121, 74}, //Autotie IIa
+                {12122, 76}, //Autotie IIb
+                {12131, 78}, //Autotie IIIa
+                {12132, 80}, //Autotie IIIb
+                {12141, 82}, //Ajotie
                 //{12151, 99}, //Lautta
                 //{12152, 99}, //Lossi
                 //{12153, 99}, //Huoltoaukko ilman puomia
                 //{12154, 99}, //Huoltoaukko puomilla
                 //{12312, 99}, //Talvitie
-                //{12313, 88}, //Polku
-                //{12314, 86}, //Kävely- ja pyörätie
-                //{12316, 84}  //Ajopolku
+                {12313, 88}, //Polku
+                {12314, 86}, //Kävely- ja pyörätie
+                {12316, 84}  //Ajopolku
 
                 //{36311, 50}, //Virtavesi, alle 2m
                 //{36312, 51}  //Virtavesi, 2-5m
@@ -100,6 +102,14 @@ namespace LasUtility.Shapefile
             CreaterRaster(extent);
         } 
 
+        public void InitializeRaster(int minX, int minY, int maxX, int maxY)
+        {
+            //Extent extent = new Extent(minX + 0.5, minY + 0.5, maxX - 0.5, maxY - 0.5);
+            Extent extent = new Extent(minX, minY, maxX, maxY);
+
+            CreaterRaster(extent);
+        }
+
 
 
         public void AddShapefile(string filename)
@@ -107,7 +117,6 @@ namespace LasUtility.Shapefile
             IFeatureSet fs = FeatureSet.Open(filename);
             int nShapes = fs.NumRows();
 
-            Console.WriteLine("File {0} contains {1} shapes", Path.GetFileName(filename), nShapes);
             int nAdded = 0;
 
             for (int i = 0; i < nShapes; i++)
@@ -144,9 +153,13 @@ namespace LasUtility.Shapefile
                 if (i % (nShapes / 20) == 0)
                     Console.Write(".");
             }
-            Console.Write(Environment.NewLine);
 
-            Console.WriteLine("  of which {0} were added", nAdded);
+            if (nAdded > 0)
+            {
+                Console.Write(Environment.NewLine);
+                Console.WriteLine("File {0} contained {1} shapes of the wanted class of which {2} were added",
+                    Path.GetFileName(filename), nShapes, nAdded);
+            }
         }
 
         private void SetValueIfInside(int iRowMin, int iRowMax, int jColMin, int jColMax, IGeometry geometry, byte rasterValue)
@@ -222,6 +235,36 @@ namespace LasUtility.Shapefile
                 foreach (byte[] row in _raster)
                     file.WriteLine(String.Join(" ", row));
             }
+        }
+
+        public void WriteAsPng(string fullFileName)
+        {
+            using Mat shpPic = new Mat(_bounds.NumRows, _bounds.NumColumns, MatType.CV_8UC3);
+
+            // OpenCV image channes are in order BGR(Blue - Green - Red)
+            const int OPEN_CV_RED = 2;
+            const int OPEN_CV_GREEN = 1;
+            const int OPEN_CV_BLUE = 0;
+
+            for (int iRow = _bounds.NumRows - 1; iRow >= 0; --iRow)
+            {
+                for (int iCol = 0; iCol < _bounds.NumColumns; ++iCol)
+                {
+                    if (_raster[iRow][iCol] != _noDataValue)
+                    {
+                        if (_raster[iRow][iCol] < 100)
+                        {
+                            shpPic.At<Vec3b>(iRow, iCol)[OPEN_CV_BLUE] = byte.MaxValue;
+                        }
+                        else
+                        {
+                            shpPic.At<Vec3b>(iRow, iCol)[OPEN_CV_RED] = byte.MaxValue;
+                        }
+                    }
+                }
+            }
+
+            shpPic.SaveImage(fullFileName);
         }
 
         public static Rasteriser CreateFromAscii(string fullFileName)
