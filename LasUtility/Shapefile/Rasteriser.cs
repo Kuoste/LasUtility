@@ -242,9 +242,9 @@ namespace LasUtility.Shapefile
             using Mat shpPic = new Mat(_bounds.NumRows, _bounds.NumColumns, MatType.CV_8UC3);
 
             // OpenCV image channes are in order BGR(Blue - Green - Red)
-            const int OPEN_CV_RED = 2;
-            const int OPEN_CV_GREEN = 1;
-            const int OPEN_CV_BLUE = 0;
+            //const int OPEN_CV_RED = 2;
+            //const int OPEN_CV_GREEN = 1;
+            //const int OPEN_CV_BLUE = 0;
 
             for (int iRow = _bounds.NumRows - 1; iRow >= 0; --iRow)
             {
@@ -252,14 +252,9 @@ namespace LasUtility.Shapefile
                 {
                     if (_raster[iRow][iCol] != _noDataValue)
                     {
-                        if (_raster[iRow][iCol] < 100)
-                        {
-                            shpPic.At<Vec3b>(iRow, iCol)[OPEN_CV_BLUE] = byte.MaxValue;
-                        }
-                        else
-                        {
-                            shpPic.At<Vec3b>(iRow, iCol)[OPEN_CV_RED] = byte.MaxValue;
-                        }
+                        shpPic.At<Vec3b>(iRow, iCol)[0] = _raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRow, iCol)[1] = _raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRow, iCol)[2] = _raster[iRow][iCol];
                     }
                 }
             }
