@@ -23,25 +23,10 @@
     <Content Include="MIConvexHull.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DotSpatial.Analysis" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Controls" Version="4.0.656" />
     <PackageReference Include="DotSpatial.Data" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Data.Forms" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Extensions" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Modeling.Forms" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Projections" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Projections.Forms" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Serialization" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Symbology" Version="4.0.656" />
-    <PackageReference Include="DotSpatial.Symbology.Forms" Version="4.0.656" />
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.8.0.20230708" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
-    <PackageReference Include="System.Memory" Version="4.5.5" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
   </ItemGroup>
 </Project>

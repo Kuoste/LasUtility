@@ -1,6 +1,5 @@
 ﻿using DotSpatial.Data;
 using DotSpatial.NTSExtension;
-using DotSpatial.Symbology;
 using LasUtility.DEM;
 using NetTopologySuite.Geometries;
 using OpenCvSharp;
