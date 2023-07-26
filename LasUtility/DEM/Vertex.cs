@@ -1,5 +1,5 @@
-﻿using DotSpatial.Topology;
-using MIConvexHull;
+﻿using MIConvexHull;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,11 +27,19 @@ namespace LasUtility.DEM
             }
         }
 
-        public Coordinate Coordinate
+        public CoordinateZ Coordinate
         {
             get
             {
-                return new Coordinate(_positionXY[0], _positionXY[1], Height);
+                return new CoordinateZ(_positionXY[0], _positionXY[1], Height);
+            }
+        }
+
+        public Point Point
+        {
+            get
+            {
+                return new Point(_positionXY[0], _positionXY[1], Height);
             }
         }
 
@@ -52,20 +60,5 @@ namespace LasUtility.DEM
         {
             return "(x" + _positionXY[0] + " y " + _positionXY[1] + " z " + Height + " class " + Class + ")";
         }
-
-
-        //protected override Geometry DefiningGeometry
-        //{
-        //    get
-        //    {
-        //        return new EllipseGeometry
-        //        {
-        //            Center = new Point(Position[0], Position[1]),
-        //            RadiusX = 1.5,
-        //            RadiusY = 1.5
-        //        };
-        //    }
-        //}
-
     }
 }

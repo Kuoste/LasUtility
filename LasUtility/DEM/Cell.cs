@@ -1,11 +1,5 @@
-﻿using DotSpatial.Topology;
-using LasUtility.DEM;
-using MIConvexHull;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MIConvexHull;
+using NetTopologySuite.Geometries;
 
 namespace LasUtility.DEM
 {
@@ -17,13 +11,13 @@ namespace LasUtility.DEM
         {
             if (_polygon == null)
             {
-                _polygon = new Polygon(new Coordinate[]
+                _polygon = new Polygon(new LinearRing(new Coordinate[]
                 {
                     Vertices[0].Coordinate,
                     Vertices[1].Coordinate,
                     Vertices[2].Coordinate,
-                    Vertices[0].Coordinate,
-                });
+                    Vertices[0].Coordinate
+                }));
             }
             return _polygon;
         }

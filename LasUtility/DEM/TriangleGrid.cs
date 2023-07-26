@@ -1,20 +1,23 @@
 ﻿using DotSpatial.Data;
-using DotSpatial.Topology;
 using LasUtility.DEM;
 using MIConvexHull;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LasUtility.DEM
 {
+    [SupportedOSPlatform("windows")]
     internal class TriangleIndexGrid
     {
         List<int>[][] _grid;
+        private readonly int _nRows;
+        private readonly int _nCols;
 
-        int _nRows, _nCols;
         public IRasterBounds Bounds { get; private set; }
 
         public TriangleIndexGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
@@ -22,7 +25,7 @@ namespace LasUtility.DEM
             _nRows = nRows;
             _nCols = nCols;
 
-            Extent extent = new Extent(minX, minY, maxX, maxY);
+            Extent extent = new (minX, minY, maxX, maxY);
             Bounds = new RasterBounds(nRows, nCols, extent);
         }
 
@@ -53,9 +56,7 @@ namespace LasUtility.DEM
 
         public List<int> GetTriangleIndexesInCell(double x, double y)
         {
-            int iRow, jCol;
-
-            if (!GetGridIndexes(x, y, out iRow, out jCol) ||
+            if (!GetGridIndexes(x, y, out int iRow, out int jCol) ||
                 _grid[iRow][jCol] == null)
             {
                 return new List<int>();
@@ -64,17 +65,15 @@ namespace LasUtility.DEM
             return _grid[iRow][jCol];
         }
 
-        public void AddIndex(IEnvelope e, int index)
+        public void AddIndex(Envelope e, int index)
         {
-            int iRowMin, iColMin, iRowMax, iColMax;
-
             if (_grid == null)
                 CreateGrid();
 
-            bool minInBounds = GetGridIndexes(e.Minimum.X, 
-                e.Maximum.Y, out iRowMin, out iColMin);
-            bool maxInBounds = GetGridIndexes(e.Maximum.X,
-                e.Minimum.Y, out iRowMax, out iColMax);
+            bool minInBounds = GetGridIndexes(e.MinX, 
+                e.MaxY, out int iRowMin, out int iColMin);
+            bool maxInBounds = GetGridIndexes(e.MaxX,
+                e.MinY, out int iRowMax, out int iColMax);
 
             if (minInBounds && maxInBounds)
             {

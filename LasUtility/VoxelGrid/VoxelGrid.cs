@@ -1,13 +1,15 @@
 ﻿using DotSpatial.Data;
-using DotSpatial.Topology;
 using LasUtility.DEM;
 using System.Linq;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using NetTopologySuite.Geometries;
+using System.Runtime.Versioning;
 
 namespace LasUtility.VoxelGrid
 {
+    [SupportedOSPlatform("windows")]
     public class VoxelGrid : IHeightMap
     {
         IRasterBounds _bounds;
@@ -18,12 +20,13 @@ namespace LasUtility.VoxelGrid
 
         public static VoxelGrid CreateGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
-            Extent extent = new Extent(minX, minY, maxX, maxY);
-            VoxelGrid voxelGrid = new VoxelGrid();
-
-            voxelGrid.nRows = nRows;
-            voxelGrid.nCols = nCols;
-            voxelGrid._bounds= new RasterBounds(nRows, nCols, extent);
+            Extent extent = new (minX, minY, maxX, maxY);
+            VoxelGrid voxelGrid = new()
+            {
+                nRows = nRows,
+                nCols = nCols,
+                _bounds = new RasterBounds(nRows, nCols, extent)
+            };
 
             Bin[][] grid = new Bin[nRows][];
 
@@ -51,7 +54,7 @@ namespace LasUtility.VoxelGrid
             //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).X + " y "
             //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).Y);
 
-            for (int iRow = 0; iRow < grid.Count(); iRow++)
+            for (int iRow = 0; iRow < grid.Length; iRow++)
             {
                 grid[iRow] = new Bin[nCols];
 
@@ -78,7 +81,7 @@ namespace LasUtility.VoxelGrid
 
         public void GetGridCoordinates(int iRow, int jCol, out double x, out double y)
         {
-            Coordinate c = _bounds.CellBottomLeft_ToProj(iRow, jCol);
+            Coordinate c = _bounds.CellBottomLeftToProj(iRow, jCol);
 
             x = c.X;
             y = c.Y;
@@ -86,10 +89,9 @@ namespace LasUtility.VoxelGrid
 
         public bool AddPoint(double x, double y, double z, byte classification, bool IsGroundPoint)
         {
-            int iRow, jCol;
             bool IsAdded = false;
 
-            if (GetGridIndexes(x, y, out iRow, out jCol))
+            if (GetGridIndexes(x, y, out int iRow, out int jCol))
             {
                 if (z < 0)
                     z = 0;
@@ -107,7 +109,6 @@ namespace LasUtility.VoxelGrid
         {
             nMissingBefore = 0;
             nMissingAfter = 0;
-            byte classification;
 
             RcIndex rcMin = _bounds.ProjToCell(new Coordinate(minX, maxY));
             RcIndex rcMax = _bounds.ProjToCell(new Coordinate(maxX, minY));
@@ -124,18 +125,17 @@ namespace LasUtility.VoxelGrid
                     if (double.IsNaN(median))
                     {
                         nMissingBefore++;
-                        Coordinate center = _bounds.CellCenter_ToProj(iRow, jCol);
+                        Coordinate center = _bounds.CellCenterToProj(iRow, jCol);
                         
-                        median = tri.GetHeightAndClass(center.X, center.Y, out classification);
+                        median = tri.GetHeightAndClass(center.X, center.Y, out byte classification);
 
                         if (double.IsNaN(median))
                         {
                             nMissingAfter++;
-                            median = 0;
                         }
                         else
                         {
-                            BinPoint p = new BinPoint() { Z = median, Class = classification };
+                            BinPoint p = new () { Z = median, Class = classification };
 
                             if (isGround)
                                 _grid[iRow][jCol].GroundReference = p;
@@ -161,66 +161,64 @@ namespace LasUtility.VoxelGrid
 
         public void SaveAsAscHighestInClassRange(string outputFileName, int lowestClass, int highestClass, double noDataValue = -9999)
         {
-            using (StreamWriter file = new StreamWriter(outputFileName))
+            using StreamWriter file = new (outputFileName);
+
+            WriteAscHeader(noDataValue, file);
+
+            foreach (Bin[] row in _grid)
             {
-                WriteAscHeader(noDataValue, file);
-
-                foreach (Bin[] row in _grid)
+                List<double> heights = new ();
+                foreach (Bin b in row)
                 {
-                    List<double> heights = new List<double>();
-                    foreach (Bin b in row)
+                    double h = double.NaN;
+
+                    foreach (BinPoint p in b.OtherPoints)
                     {
-                        double h = double.NaN;
-
-                        foreach (BinPoint p in b.OtherPoints)
+                        if (p.Class >= lowestClass && p.Class <= highestClass)
                         {
-                            if (p.Class >= lowestClass && p.Class <= highestClass)
-                            {
-                                h = p.Z;
-                                break;
-                            }
+                            h = p.Z;
+                            break;
                         }
-                        
-                        if (double.IsNaN(h))
-                        {
-                            if (b.SurfaceReference == null)
-                                h = GetGroundMedianOrRerefence(b);
-                            else
-                                h = b.SurfaceReference.Z;
-                        }
-
-                        if (double.IsNaN(h))
-                            h = noDataValue;
-
-                        heights.Add(h);
                     }
 
-                    file.WriteLine(String.Join(" ", heights));
+                    if (double.IsNaN(h))
+                    {
+                        if (b.SurfaceReference == null)
+                            h = GetGroundMedianOrRerefence(b);
+                        else
+                            h = b.SurfaceReference.Z;
+                    }
+
+                    if (double.IsNaN(h))
+                        h = noDataValue;
+
+                    heights.Add(h);
                 }
+
+                file.WriteLine(String.Join(" ", heights));
             }
         }
 
         public void SaveAsAscGroundMedian(string outputFileName, double noDataValue = -9999)
         {
-            using (StreamWriter file = new StreamWriter(outputFileName))
+            using StreamWriter file = new (outputFileName);
+
+            WriteAscHeader(noDataValue, file);
+
+            foreach (Bin[] row in _grid)
             {
-                WriteAscHeader(noDataValue, file);
-
-                foreach (Bin[] row in _grid)
+                List<double> heights = new ();
+                foreach (Bin b in row)
                 {
-                    List<double> heights = new List<double>();
-                    foreach (Bin b in row)
-                    {
-                        double median = GetGroundMedianOrRerefence(b);
+                    double median = GetGroundMedianOrRerefence(b);
 
-                        if (double.IsNaN(median))
-                            heights.Add(noDataValue);
-                        else
-                            heights.Add(median);
-                    }
-
-                    file.WriteLine(String.Join(" ", heights));
+                    if (double.IsNaN(median))
+                        heights.Add(noDataValue);
+                    else
+                        heights.Add(median);
                 }
+
+                file.WriteLine(String.Join(" ", heights));
             }
         }
 
@@ -252,7 +250,7 @@ namespace LasUtility.VoxelGrid
 
         public List<double> GetOtherPointsByClassRange(int iRow, int jCol, int lowestClass, int highestClass)
         {
-            List<double> heights = new List<double>();
+            List<double> heights = new ();
 
             foreach (BinPoint p in _grid[iRow][jCol].OtherPoints)
             {
@@ -272,13 +270,12 @@ namespace LasUtility.VoxelGrid
         {
             BinPoint p = _grid[iRow][jCol].GetGroundMedianPoint();
 
-            if (p == null)
-                p = _grid[iRow][jCol].GroundReference;
+            p ??= _grid[iRow][jCol].GroundReference;
 
             return p;
         }
 
-        private double GetGroundMedianOrRerefence(Bin b)
+        private static double GetGroundMedianOrRerefence(Bin b)
         {
             double median = b.GetGroundMedian();
             if (double.IsNaN(median))
@@ -358,10 +355,9 @@ namespace LasUtility.VoxelGrid
 
         public double GetHeight(double x, double y)
         {
-            int iRow, jCol;
             double ret = double.NaN;
 
-            if (GetGridIndexes(x, y, out iRow, out jCol))
+            if (GetGridIndexes(x, y, out int iRow, out int jCol))
             {
                 ret = GetGroundMedian(iRow, jCol);
             }

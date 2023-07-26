@@ -1,25 +1,25 @@
 ﻿using DotSpatial.Data;
-using DotSpatial.Topology;
 using LasUtility.LAS;
 using MIConvexHull;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Versioning;
 
 namespace LasUtility.DEM
 {
+    [SupportedOSPlatform("windows")]
     public class SurfaceTriangulation : IHeightMap
     {
-        List<Vertex> _vertices = new List<Vertex>();
-        ITriangulation<Vertex, Cell<Vertex>> _tri;
+        readonly List<Vertex> _vertices = new ();
         TriangleIndexGrid _grid;
+        VoronoiMesh<Vertex, Cell<Vertex>, VoronoiEdge<Vertex, Cell<Vertex>>> _voronoiMesh;
 
         public void Clear()
         {
-            _tri = null;
+            _voronoiMesh = null;
             _vertices.Clear();
             _grid.ResetGrid();
             _grid = null;
@@ -32,7 +32,7 @@ namespace LasUtility.DEM
 
         public void AddPoint(int iRow, int jCol, double z, byte classification)
         {
-            Coordinate c = _grid.Bounds.CellCenter_ToProj(iRow, jCol);
+            Coordinate c = _grid.Bounds.CellCenterToProj(iRow, jCol);
             _vertices.Add(new Vertex(c.X, c.Y, z, classification));
         }
 
@@ -48,41 +48,30 @@ namespace LasUtility.DEM
 
             _grid.ResetGrid();
 
-            TriangulationComputationConfig config = new TriangulationComputationConfig
-            {
-                PointTranslationType = PointTranslationType.TranslateInternal,
-                PlaneDistanceTolerance = 0.000000001,
-                // the translation radius should be lower than PlaneDistanceTolerance / 2
-                PointTranslationGenerator = TriangulationComputationConfig.RandomShiftByRadius(0.0000000001, 0)
-            };
+            _voronoiMesh = VoronoiMesh.Create<Vertex, Cell<Vertex>>(_vertices);
 
-            _tri = Triangulation.CreateDelaunay<Vertex, Cell<Vertex>>(_vertices, config);
-
-            for (int i = 0; i < _tri.Cells.Count(); i++)
+            for (int i = 0; i < _voronoiMesh.Vertices.Count(); i++)
             {
-                var c = _tri.Cells.ElementAt(i);
-                _grid.AddIndex(c.GetPolygon().Envelope, i);
+                var v = _voronoiMesh.Vertices.ElementAt(i);
+                _grid.AddIndex(v.GetPolygon().EnvelopeInternal, i);
             }
         }
 
         public void ExportToShp(string shpFilePath)
         {
-            FeatureSet fs = new FeatureSet(FeatureType.Polygon);
+            FeatureSet fs = new(FeatureType.Polygon);
 
             fs.DataTable.Columns.Add(new DataColumn("ID", typeof(int)));
             //fs.DataTable.Columns.Add(new DataColumn("Text", typeof(string)));
 
-            for (int i = 0; i < _tri.Cells.Count(); i++)
+            int i = 0;
+            foreach (var v in _voronoiMesh.Vertices)
             {
-                var c = _tri.Cells.ElementAt(i);
-
-                IFeature feature = fs.AddFeature(c.GetPolygon());
+                IFeature feature = fs.AddFeature(v.GetPolygon());
 
                 feature.DataRow.BeginEdit();
-                feature.DataRow["ID"] = i;
-                //feature.DataRow["Text"] = "Hello World";
+                feature.DataRow["ID"] = i++;
                 feature.DataRow.EndEdit();
-
             }
 
             // save the feature set
@@ -98,11 +87,11 @@ namespace LasUtility.DEM
                 throw new InvalidOperationException("Triangulation is not created.");
 
             List<int> indexes = _grid.GetTriangleIndexesInCell(x, y);
-            Point point = new Point(x, y);
+            Point point = new (x, y);
 
             foreach (int i in indexes)
             {
-                var cell = _tri.Cells.ElementAt(i);
+                var cell = _voronoiMesh.Vertices.ElementAt(i);
                 try
                 {
                     if (IsPointInPolygon(cell.GetPolygon(), point))
@@ -122,14 +111,14 @@ namespace LasUtility.DEM
             return ret;
         }
 
-        private Vertex GetClosestVertex(Point point, Vertex[] vertices)
+        private static Vertex GetClosestVertex(Point point, Vertex[] vertices)
         {
             Vertex nearest = null;
             double minDistance = double.MaxValue;
 
             foreach (Vertex vertex in vertices)
             {
-                double distance = point.HyperDistance(vertex.Coordinate);
+                double distance = point.Distance(vertex.Point);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -140,13 +129,13 @@ namespace LasUtility.DEM
             return nearest;
         }
 
-        private bool IsPointInPolygon(Polygon polygon, Point point)
+        private static bool IsPointInPolygon(Polygon polygon, Point point)
         {
             //return polygon.Contains(point);
             return polygon.Intersects(point);
         }
 
-        private double InterpolateHeightFromPolygon(Polygon p, double x, double y)
+        private static double InterpolateHeightFromPolygon(Polygon p, double x, double y)
         {
             Coordinate p1 = p.Coordinates[0];
             Coordinate p2 = p.Coordinates[1];
@@ -168,8 +157,7 @@ namespace LasUtility.DEM
 
         public double GetHeight(double x, double y)
         {
-            byte classification;
-            return GetValue(x, y, out classification);
+            return GetValue(x, y, out _);
         }
 
 
