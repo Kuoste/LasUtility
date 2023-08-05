@@ -1,17 +1,10 @@
-﻿using DotSpatial.Data;
-using LasUtility.DEM;
-using MIConvexHull;
+﻿using LasUtility.Common;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LasUtility.DEM
 {
-    [SupportedOSPlatform("windows")]
     internal class TriangleIndexGrid
     {
         List<int>[][] _grid;
@@ -25,7 +18,7 @@ namespace LasUtility.DEM
             _nRows = nRows;
             _nCols = nCols;
 
-            Extent extent = new (minX, minY, maxX, maxY);
+            Envelope extent = new (minX, maxX, minY, maxY);
             Bounds = new RasterBounds(nRows, nCols, extent);
         }
 

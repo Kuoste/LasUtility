@@ -1,15 +1,12 @@
-﻿using DotSpatial.Data;
-using LasUtility.DEM;
-using System.Linq;
+﻿using LasUtility.DEM;
 using System;
 using System.IO;
 using System.Collections.Generic;
 using NetTopologySuite.Geometries;
-using System.Runtime.Versioning;
+using LasUtility.Common;
 
 namespace LasUtility.VoxelGrid
 {
-    [SupportedOSPlatform("windows")]
     public class VoxelGrid : IHeightMap
     {
         IRasterBounds _bounds;
@@ -20,7 +17,7 @@ namespace LasUtility.VoxelGrid
 
         public static VoxelGrid CreateGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
-            Extent extent = new (minX, minY, maxX, maxY);
+            Envelope extent = new (minX, maxX, minY, maxY);
             VoxelGrid voxelGrid = new()
             {
                 nRows = nRows,
@@ -125,9 +122,9 @@ namespace LasUtility.VoxelGrid
                     if (double.IsNaN(median))
                     {
                         nMissingBefore++;
-                        Coordinate center = _bounds.CellCenterToProj(iRow, jCol);
+                        Coordinate c = _bounds.CellBottomLeftToProj(iRow, jCol);
                         
-                        median = tri.GetHeightAndClass(center.X, center.Y, out byte classification);
+                        median = tri.GetHeightAndClass(c.X, c.Y, out byte classification);
 
                         if (double.IsNaN(median))
                         {
@@ -226,8 +223,8 @@ namespace LasUtility.VoxelGrid
         {
             file.WriteLine("ncols         " + nCols);
             file.WriteLine("nrows         " + nRows);
-            file.WriteLine("xllcorner     " + _bounds.BottomLeft().X);
-            file.WriteLine("yllcorner     " + _bounds.BottomLeft().Y);
+            file.WriteLine("xllcorner     " + _bounds.Extent.MinX);
+            file.WriteLine("yllcorner     " + _bounds.Extent.MinY);
             file.WriteLine("cellsize      " + _bounds.CellWidth);
             file.WriteLine("NODATA_value  " + noDataValue);
         }

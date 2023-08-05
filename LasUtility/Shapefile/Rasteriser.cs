@@ -1,19 +1,16 @@
-﻿using DotSpatial.Data;
-using DotSpatial.NTSExtension;
-using LasUtility.DEM;
+﻿using LasUtility.Common;
 using NetTopologySuite.Geometries;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Threading.Tasks;
+using NetTopologySuite.IO.Esri.Shapefiles.Readers;
+using NetTopologySuite.Features;
+using NetTopologySuite.IO.Esri;
 
-namespace LasUtility.Shapefile
+namespace LasUtility.ShapefileRasteriser
 {
-    [SupportedOSPlatform("windows")]
     public class Rasteriser : IHeightMap
     {
         const int _noDataValue = 0;
@@ -83,49 +80,50 @@ namespace LasUtility.Shapefile
 
         public void InitializeRaster(string[] filenames)
         {
-            Extent extent = null;
+            Envelope extent = null;
 
             foreach (var filename in filenames)
             {
-                IFeatureSet fs = FeatureSet.Open(filename);
-
-                if (extent == null)
-                    extent = fs.Extent;
-                else
-                    extent.ExpandToInclude(fs.Extent);
+                using (ShapefileReader reader = Shapefile.OpenRead(filename))
+                {
+                    if (extent == null)
+                        extent = reader.BoundingBox;
+                    else
+                        extent.ExpandToInclude(reader.BoundingBox);
+                }
             }
 
-            // Expand to integer values to get cell size 1.0000000 meters and move by 0.5 m because extent tells the cell center.
-            extent.MinY = Math.Floor(extent.MinY);
-            extent.MinX = Math.Floor(extent.MinX);
-            extent.MaxY = Math.Ceiling(extent.MaxY);
-            extent.MaxX = Math.Ceiling(extent.MaxX);
+
+            // Expand to integer values to get cell size 1.0000000 meters 
+            extent = new Envelope(
+                Math.Floor(extent.MinX),
+                Math.Ceiling(extent.MaxX),
+                Math.Floor(extent.MinY),
+                Math.Ceiling(extent.MaxY));
+
+
 
             CreaterRaster(extent);
         } 
 
         public void InitializeRaster(int minX, int minY, int maxX, int maxY)
         {
-            //Extent extent = new Extent(minX + 0.5, minY + 0.5, maxX - 0.5, maxY - 0.5);
-            Extent extent = new (minX, minY, maxX, maxY);
+            Envelope extent = new (minX, maxX, minY, maxY);
 
             CreaterRaster(extent);
         }
 
-
-
         public void AddShapefile(string filename)
         {
-            IFeatureSet fs = FeatureSet.Open(filename);
-            int nShapes = fs.NumRows();
-
             int nAdded = 0;
+            int nTotal = 0;
 
-            for (int i = 0; i < nShapes; i++)
+            foreach (Feature feature in Shapefile.ReadAllFeatures(filename))
             {
-                Shape shape = fs.GetShape(i, true);
+                nTotal++;
 
-                int classification = (int)(long)shape.Attributes[2];
+                int classification = (int)(long)feature.Attributes["LUOKKA"];
+                
                 byte rasterValue;
 
                 if (_nlsPolygonClasses.ContainsKey(classification))
@@ -135,69 +133,48 @@ namespace LasUtility.Shapefile
                 else
                     continue;
 
-                Geometry geometry = shape.ToGeometry();
-                Envelope envelope = geometry.EnvelopeInternal;
+                Envelope envelope = feature.Geometry.EnvelopeInternal;
 
-                RcIndex iMin = _bounds.ProjToCell(new(envelope.MinX, envelope.MaxY));
-                RcIndex iMax = _bounds.ProjToCell(new(envelope.MaxX, envelope.MinY));
+                RcIndex iMin = _bounds.ProjToCell(new(envelope.MinX, envelope.MinY));
+                RcIndex iMax = _bounds.ProjToCell(new(envelope.MaxX, envelope.MaxY));
 
                 // Skip if outside the raster.
                 if (iMin == RcIndex.Empty || iMax == RcIndex.Empty)
                     continue;
 
-                //if (geometry is LineString)
-                //{
-                //    LineString ls = geometry as LineString;
-                //    geometry = ls.Buffer(2, BufferStyle.CapButt);
-                //}
-
                 nAdded++;
-                SetValueIfInside(iMin.Row - 1, iMax.Row + 1, iMin.Column - 1, iMax.Column + 1, geometry, rasterValue);
-
-                int iDivider = Math.Max(1, nShapes / 20);
-                if (i % iDivider == 0)
-                    Console.Write(".");
+                SetValueIfInside(iMin.Row, iMax.Row, iMin.Column, iMax.Column, feature.Geometry, rasterValue);
             }
 
             if (nAdded > 0)
             {
                 Console.Write(Environment.NewLine);
                 Console.WriteLine("File {0} contained {1} shapes of the wanted class of which {2} were added",
-                    Path.GetFileName(filename), nShapes, nAdded);
+                    Path.GetFileName(filename), nTotal, nAdded);
             }
         }
 
         private void SetValueIfInside(int iRowMin, int iRowMax, int jColMin, int jColMax, Geometry geometry, byte rasterValue)
         {
-            Coordinate max = new (_bounds.CellCenterToProj(iRowMin, jColMax));
-            Coordinate min = new (_bounds.CellCenterToProj(iRowMax, jColMin));
+            Coordinate max = new(_bounds.CellTopRightToProj(iRowMax, jColMax));
+            Coordinate min = new(_bounds.CellBottomLeftToProj(iRowMin, jColMin));
 
-            Geometry rect = new Envelope(min, max).ToPolygon();
+            Geometry rect = new Polygon(new LinearRing(new Coordinate[]
+            {
+                new Coordinate(min.X, min.Y),
+                new Coordinate(min.X, max.Y),
+                new Coordinate(max.X, max.Y),
+                new Coordinate(max.X, min.Y),
+                new Coordinate(min.X, min.Y)
+            }));
 
             if (geometry.Intersects(rect))
             {
                 if (((iRowMax - iRowMin) < 2 && (jColMax - jColMin) < 2) || geometry.Contains(rect))
                 {
-                    if (rasterValue >= 50 && rasterValue < 100)
+                    for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
                     {
-                        iRowMin--;
-                        jColMin--;
-                        jColMax++;
-                        iRowMax++;
-                    }
-
-                    if (iRowMin < 0)
-                        iRowMin = 0;
-                    if (jColMin < 0)
-                        jColMin = 0;
-                    if (jColMax > _bounds.NumColumns)
-                        jColMax = _bounds.NumColumns;
-                    if (iRowMax > _bounds.NumRows)
-                        iRowMax = _bounds.NumRows;
-
-                    for (int iRow = iRowMin; iRow < iRowMax; iRow++)
-                    {
-                        for (int jCol = jColMin; jCol < jColMax; jCol++)
+                        for (int jCol = jColMin; jCol <= jColMax; jCol++)
                         {
                             _raster[iRow][jCol] = rasterValue;
                         }
@@ -205,6 +182,8 @@ namespace LasUtility.Shapefile
                 }
                 else
                 {
+                    // Split the rectangle into four parts and check each part recursively.
+
                     int iRowCenter = iRowMax, jColCenter = jColMax;
 
                     if ((iRowMax - iRowMin) > 1)
@@ -232,13 +211,15 @@ namespace LasUtility.Shapefile
 
             file.WriteLine("ncols         " + _bounds.NumColumns);
             file.WriteLine("nrows         " + _bounds.NumRows);
-            file.WriteLine("xllcorner     " + _bounds.BottomLeft().X);
-            file.WriteLine("yllcorner     " + _bounds.BottomLeft().Y);
+            file.WriteLine("xllcorner     " + _bounds.Extent.MinX);
+            file.WriteLine("yllcorner     " + _bounds.Extent.MinY);
             file.WriteLine("cellsize      " + _bounds.CellWidth);
             file.WriteLine("NODATA_value  " + _noDataValue);
 
-            foreach (byte[] row in _raster)
-                file.WriteLine(String.Join(" ", row));
+            for (int iRow = _bounds.NumRows - 1; iRow >= 0; --iRow)
+            {
+                file.WriteLine(String.Join(" ", _raster[iRow]));
+            }
         }
 
         public void WriteAsPng(string fullFileName)
@@ -250,15 +231,19 @@ namespace LasUtility.Shapefile
             //const int OPEN_CV_GREEN = 1;
             //const int OPEN_CV_BLUE = 0;
 
-            for (int iRow = _bounds.NumRows - 1; iRow >= 0; --iRow)
+            for (int iRow = 0; iRow < _bounds.NumRows; iRow++)
             {
-                for (int iCol = 0; iCol < _bounds.NumColumns; ++iCol)
+                for (int iCol = 0; iCol < _bounds.NumColumns; iCol++)
                 {
                     if (_raster[iRow][iCol] != _noDataValue)
                     {
-                        shpPic.At<Vec3b>(iRow, iCol)[0] = _raster[iRow][iCol];
-                        shpPic.At<Vec3b>(iRow, iCol)[1] = _raster[iRow][iCol];
-                        shpPic.At<Vec3b>(iRow, iCol)[2] = _raster[iRow][iCol];
+                        // Mirror rows
+                        int iRowMirrored = _bounds.NumRows - 1 - iRow;
+
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[0] = _raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[1] = _raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[2] = _raster[iRow][iCol];
+
                     }
                 }
             }
@@ -303,16 +288,16 @@ namespace LasUtility.Shapefile
                             if (nRows < 0 || nCols < 0 || minX < 0 || minY < 0 || cellSize < 0)
                                 throw new Exception("Invalid format in header " + fullFileName);
 
-                            Extent extent = new (minX, minY, minX + nCols, minY + nRows);
+                            Envelope extent = new (minX, minX + nCols, minY, minY + nRows);
                             ras.CreaterRaster(extent);
                             IsHeaderRead = true;
-                            iRow = 0;
+                            iRow = nRows;
                         }
                     }
 
                     if (IsHeaderRead)
                     {
-                        if (iRow > nRows - 1)
+                        if (iRow < 0)
                             throw new Exception(String.Format("File {0} contains too many data rows", fullFileName));
 
                         if (words.Length != nCols)
@@ -321,21 +306,20 @@ namespace LasUtility.Shapefile
                                 fullFileName, words.Length, nRows - 1 - iRow));
                         }
 
-                        ras._raster[iRow] = Array.ConvertAll(words, byte.Parse);
-                        iRow++;
+                        ras._raster[--iRow] = Array.ConvertAll(words, byte.Parse);
                     }
 
 
                 }
 
-                if (iRow < nRows)
+                if (iRow < 0)
                     throw new Exception(String.Format("File {0} contains too few data rows", fullFileName));
             }
 
             return ras;
         }
 
-        private void CreaterRaster(Extent extent)
+        private void CreaterRaster(Envelope extent)
         {
             _bounds = new RasterBounds((int)extent.Height, (int)extent.Width, extent);
             _raster = new byte[_bounds.NumRows][];

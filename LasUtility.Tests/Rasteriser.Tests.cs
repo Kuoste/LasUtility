@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using Xunit;
-using LasUtility.Shapefile;
+using LasUtility.ShapefileRasteriser;
 using System.Diagnostics;
 
 namespace LasUtility.Tests
@@ -36,9 +36,12 @@ namespace LasUtility.Tests
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
 
             rasteriser.InitializeRaster(shpFullFilenames);
+            //rasteriser.InitializeRaster(new string[] { @"D:\building2.shp" });
 
             foreach (string filename in shpFullFilenames)
                 rasteriser.AddShapefile(filename);
+
+            //rasteriser.AddShapefile(@"D:\building2.shp");
 
             rasteriser.WriteAsAscii(sOutputAscFilename);
             rasteriser.WriteAsPng(sOutputPngFilename);
@@ -51,8 +54,24 @@ namespace LasUtility.Tests
             string sInputPngFilename = Path.Combine(sTestInputFoldername, "buildings_roads.png");
             Assert.True(File.Exists(sInputAscFilename), "Reference file does not exists in Input folder");
             Assert.True(File.Exists(sInputPngFilename), "Reference file does not exists in Input folder");
-            Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "File contents do not match");
-            Assert.True(Utils.FileCompare(sInputPngFilename, sOutputPngFilename), "File contents do not match");
+            Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "ASC file contents do not match");
+            Assert.True(Utils.FileCompare(sInputPngFilename, sOutputPngFilename), "SHP file contents do not match");
+        }
+
+        [Fact]
+        public void ReadRaster_ShouldContainBuilding()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            string sTestName = "ReadRaster_ShouldContainBuilding";
+            string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
+
+            var rasteriser = Rasteriser.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+
+            byte classification = (byte)rasteriser.GetHeight(518550, 7044465);
+            byte inputClassification = 101;
+
+            Assert.Equal(inputClassification, classification);
         }
 
         [Fact]

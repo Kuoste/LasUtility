@@ -1,16 +1,16 @@
-﻿using DotSpatial.Data;
+﻿using LasUtility.Common;
 using LasUtility.LAS;
 using MIConvexHull;
+using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.IO.Esri;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Runtime.Versioning;
 
 namespace LasUtility.DEM
 {
-    [SupportedOSPlatform("windows")]
     public class SurfaceTriangulation : IHeightMap
     {
         readonly List<Vertex> _vertices = new ();
@@ -32,7 +32,7 @@ namespace LasUtility.DEM
 
         public void AddPoint(int iRow, int jCol, double z, byte classification)
         {
-            Coordinate c = _grid.Bounds.CellCenterToProj(iRow, jCol);
+            Coordinate c = _grid.Bounds.CellBottomLeftToProj(iRow, jCol);
             _vertices.Add(new Vertex(c.X, c.Y, z, classification));
         }
 
@@ -59,23 +59,20 @@ namespace LasUtility.DEM
 
         public void ExportToShp(string shpFilePath)
         {
-            FeatureSet fs = new(FeatureType.Polygon);
-
-            fs.DataTable.Columns.Add(new DataColumn("ID", typeof(int)));
-            //fs.DataTable.Columns.Add(new DataColumn("Text", typeof(string)));
+            List<Feature> features = new();
 
             int i = 0;
             foreach (var v in _voronoiMesh.Vertices)
             {
-                IFeature feature = fs.AddFeature(v.GetPolygon());
+                var attributes = new AttributesTable
+                {
+                    { "ID", i++ },
+                };
 
-                feature.DataRow.BeginEdit();
-                feature.DataRow["ID"] = i++;
-                feature.DataRow.EndEdit();
+                features.Add(new Feature(v.GetPolygon(), attributes));
             }
 
-            // save the feature set
-            fs.SaveAs(shpFilePath, true);
+            Shapefile.WriteAllFeatures(features, shpFilePath);
         }
 
         public double GetValue(double x, double y, out byte classification)
