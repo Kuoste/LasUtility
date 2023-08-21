@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
-    <RootNamespace>LasReader</RootNamespace>
-    <AssemblyName>LasReader</AssemblyName>
+    <RootNamespace>LasUtility</RootNamespace>
+    <AssemblyName>LasUtility</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
