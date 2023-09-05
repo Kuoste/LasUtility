@@ -91,9 +91,9 @@ namespace LasUtility.DEM
                 var cell = _voronoiMesh.Vertices.ElementAt(i);
                 try
                 {
-                    if (IsPointInPolygon(cell.GetPolygon(), point))
+                    if (IsPointInTriangle(point, cell.Vertices))
                     {
-                        ret = InterpolateHeightFromPolygon(cell.GetPolygon(), x, y);
+                        ret = InterpolateHeightFromTriangle(cell.Vertices, x, y);
                         point.Z = ret;
                         classification = GetClosestVertex(point, cell.Vertices).Class;
                         break;
@@ -132,6 +132,49 @@ namespace LasUtility.DEM
             return polygon.Intersects(point);
         }
 
+        private static double sign(Point p1, Point p2, Point p3)
+        {
+            return (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
+        }
+
+        /* 
+         * From https://stackoverflow.com/a/2049593
+         */
+        private static bool IsPointInTriangle(Point pt, Vertex[] vertices)
+        {
+            if (vertices.Length != 3)
+                throw new Exception("Triangle must contain exactly 3 points");
+
+            double d1, d2, d3;
+            bool has_neg, has_pos;
+
+            d1 = sign(pt, vertices[0].Point, vertices[1].Point);
+            d2 = sign(pt, vertices[1].Point, vertices[2].Point);
+            d3 = sign(pt, vertices[2].Point, vertices[0].Point);
+
+            has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+            has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+            return !(has_neg && has_pos);
+        }
+
+        private static double InterpolateHeightFromTriangle(Vertex[] vertices, double x, double y)
+        {
+            if (vertices.Length != 3)
+                throw new Exception("Triangle must contain exactly 3 points");
+
+            Coordinate p1 = vertices[0].Point.Coordinate;
+            Coordinate p2 = vertices[1].Point.Coordinate;
+            Coordinate p3 = vertices[2].Point.Coordinate;
+
+            double det = (p2.Y - p3.Y) * (p1.X - p3.X) + (p3.X - p2.X) * (p1.Y - p3.Y);
+
+            double l1 = ((p2.Y - p3.Y) * (x - p3.X) + (p3.X - p2.X) * (y - p3.Y)) / det;
+            double l2 = ((p3.Y - p1.Y) * (x - p3.X) + (p1.X - p3.X) * (y - p3.Y)) / det;
+            double l3 = 1.0f - l1 - l2;
+
+            return l1 * p1.Z + l2 * p2.Z + l3 * p3.Z;
+        }
         private static double InterpolateHeightFromPolygon(Polygon p, double x, double y)
         {
             Coordinate p1 = p.Coordinates[0];

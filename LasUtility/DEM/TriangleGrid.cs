@@ -64,9 +64,9 @@ namespace LasUtility.DEM
                 CreateGrid();
 
             bool minInBounds = GetGridIndexes(e.MinX, 
-                e.MaxY, out int iRowMin, out int iColMin);
+                e.MinY, out int iRowMin, out int iColMin);
             bool maxInBounds = GetGridIndexes(e.MaxX,
-                e.MinY, out int iRowMax, out int iColMax);
+                e.MaxY, out int iRowMax, out int iColMax);
 
             if (minInBounds && maxInBounds)
             {
