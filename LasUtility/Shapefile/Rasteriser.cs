@@ -1,6 +1,5 @@
 ﻿using LasUtility.Common;
 using NetTopologySuite.Geometries;
-using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +7,9 @@ using System.Runtime.Versioning;
 using NetTopologySuite.IO.Esri.Shapefiles.Readers;
 using NetTopologySuite.Features;
 using NetTopologySuite.IO.Esri;
+#if OPEN_CV
+using OpenCvSharp;
+#endif
 
 namespace LasUtility.ShapefileRasteriser
 {
@@ -222,6 +224,7 @@ namespace LasUtility.ShapefileRasteriser
             }
         }
 
+#if OPEN_CV
         public void WriteAsPng(string fullFileName)
         {
             using Mat shpPic = new (_bounds.NumRows, _bounds.NumColumns, MatType.CV_8UC3);
@@ -250,6 +253,7 @@ namespace LasUtility.ShapefileRasteriser
 
             shpPic.SaveImage(fullFileName);
         }
+#endif
 
         public static Rasteriser CreateFromAscii(string fullFileName)
         {

@@ -2,6 +2,9 @@
 using Xunit;
 using LasUtility.ShapefileRasteriser;
 using System.Diagnostics;
+#if OPEN_CV
+using OpenCvSharp;
+#endif
 
 namespace LasUtility.Tests
 {
@@ -36,26 +39,24 @@ namespace LasUtility.Tests
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
 
             rasteriser.InitializeRaster(shpFullFilenames);
-            //rasteriser.InitializeRaster(new string[] { @"D:\building2.shp" });
 
             foreach (string filename in shpFullFilenames)
                 rasteriser.AddShapefile(filename);
 
-            //rasteriser.AddShapefile(@"D:\building2.shp");
-
             rasteriser.WriteAsAscii(sOutputAscFilename);
-            rasteriser.WriteAsPng(sOutputPngFilename);
-
             Assert.True(File.Exists(sOutputAscFilename));
-            Assert.True(File.Exists(sOutputPngFilename));
-
-            // Compare file contents with files in test folder
             string sInputAscFilename = Path.Combine(sTestInputFoldername, "buildings_roads.asc");
-            string sInputPngFilename = Path.Combine(sTestInputFoldername, "buildings_roads.png");
             Assert.True(File.Exists(sInputAscFilename), "Reference file does not exists in Input folder");
-            Assert.True(File.Exists(sInputPngFilename), "Reference file does not exists in Input folder");
             Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "ASC file contents do not match");
+
+#if OPEN_CV
+            rasteriser.WriteAsPng(sOutputPngFilename);
+            Assert.True(File.Exists(sOutputPngFilename));
+            string sInputPngFilename = Path.Combine(sTestInputFoldername, "buildings_roads.png");
+            Assert.True(File.Exists(sInputPngFilename), "Reference file does not exists in Input folder");
             Assert.True(Utils.FileCompare(sInputPngFilename, sOutputPngFilename), "SHP file contents do not match");
+#endif
+
         }
 
         [Fact]
