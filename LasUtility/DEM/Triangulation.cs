@@ -126,11 +126,11 @@ namespace LasUtility.DEM
             return nearest;
         }
 
-        private static bool IsPointInPolygon(Polygon polygon, Point point)
-        {
-            //return polygon.Contains(point);
-            return polygon.Intersects(point);
-        }
+        //private static bool IsPointInPolygon(Polygon polygon, Point point)
+        //{
+        //    //return polygon.Contains(point);
+        //    return polygon.Intersects(point);
+        //}
 
         private static double sign(Point p1, Point p2, Point p3)
         {
@@ -166,20 +166,6 @@ namespace LasUtility.DEM
             Coordinate p1 = vertices[0].Point.Coordinate;
             Coordinate p2 = vertices[1].Point.Coordinate;
             Coordinate p3 = vertices[2].Point.Coordinate;
-
-            double det = (p2.Y - p3.Y) * (p1.X - p3.X) + (p3.X - p2.X) * (p1.Y - p3.Y);
-
-            double l1 = ((p2.Y - p3.Y) * (x - p3.X) + (p3.X - p2.X) * (y - p3.Y)) / det;
-            double l2 = ((p3.Y - p1.Y) * (x - p3.X) + (p1.X - p3.X) * (y - p3.Y)) / det;
-            double l3 = 1.0f - l1 - l2;
-
-            return l1 * p1.Z + l2 * p2.Z + l3 * p3.Z;
-        }
-        private static double InterpolateHeightFromPolygon(Polygon p, double x, double y)
-        {
-            Coordinate p1 = p.Coordinates[0];
-            Coordinate p2 = p.Coordinates[1];
-            Coordinate p3 = p.Coordinates[2];
 
             double det = (p2.Y - p3.Y) * (p1.X - p3.X) + (p3.X - p2.X) * (p1.Y - p3.Y);
 

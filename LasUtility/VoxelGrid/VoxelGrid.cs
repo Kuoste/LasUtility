@@ -99,16 +99,15 @@ namespace LasUtility.VoxelGrid
 
             return IsAdded;
         }
-
-        private void SetReferenceHeights(SurfaceTriangulation tri, bool isGround, 
+        public void SetGroundReferenceHeights(SurfaceTriangulation tri, 
             double minX, double minY, double maxX, double maxY, 
             out int nMissingBefore, out int nMissingAfter)
         {
             nMissingBefore = 0;
             nMissingAfter = 0;
 
-            RcIndex rcMin = _bounds.ProjToCell(new Coordinate(minX, maxY));
-            RcIndex rcMax = _bounds.ProjToCell(new Coordinate(maxX, minY));
+            RcIndex rcMin = _bounds.ProjToCell(new Coordinate(minX, minY));
+            RcIndex rcMax = _bounds.ProjToCell(new Coordinate(maxX, maxY));
 
             if (rcMin == RcIndex.Empty || rcMax == RcIndex.Empty)
                 throw new Exception();
@@ -131,29 +130,12 @@ namespace LasUtility.VoxelGrid
                             nMissingAfter++;
                         }
                         else
-                        {
-                            BinPoint p = new () { Z = median, Class = classification };
-
-                            if (isGround)
-                                _grid[iRow][jCol].GroundReference = p;
-                            else
-                                _grid[iRow][jCol].SurfaceReference = p;
+                        {                          
+                            _grid[iRow][jCol].GroundReference = new() { Z = median, Class = classification };
                         }
                     }
                 }
             }
-        }
-
-        public void SetGroundReferenceHeights(SurfaceTriangulation tri, double minX, double minY, double maxX, double maxY,
-            out int nMissingBefore, out int nMissingAfter)
-        {
-            SetReferenceHeights(tri, true, minX, minY, maxX, maxY, out nMissingBefore, out nMissingAfter);
-        }
-
-        public void SetSurfaceReferenceHeights(SurfaceTriangulation tri, double minX, double minY, double maxX, double maxY,
-            out int nMissingBefore, out int nMissingAfter)
-        {
-            SetReferenceHeights(tri, false, minX, minY, maxX, maxY, out nMissingBefore, out nMissingAfter);
         }
 
         public void SaveAsAscHighestInClassRange(string outputFileName, int lowestClass, int highestClass, double noDataValue = -9999)
