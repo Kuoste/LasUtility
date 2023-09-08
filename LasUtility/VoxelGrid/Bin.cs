@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace LasUtility.VoxelGrid
 {
+    [Serializable]
     public class Bin
     {
         public BinPoint SurfaceReference { get; set; }
@@ -59,6 +60,7 @@ namespace LasUtility.VoxelGrid
         }
     }
 
+    [Serializable]
     public class BinPoint : IComparable<BinPoint>
     {
         private int _z;

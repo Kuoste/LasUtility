@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace LasUtility.Common
 {
+    [Serializable]
     internal class RasterBounds : IRasterBounds
     {
         public int NumRows { get; }

@@ -4,9 +4,11 @@ using System.IO;
 using System.Collections.Generic;
 using NetTopologySuite.Geometries;
 using LasUtility.Common;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace LasUtility.VoxelGrid
 {
+    [Serializable]
     public class VoxelGrid : IHeightMap
     {
         IRasterBounds _bounds;
@@ -15,6 +17,16 @@ namespace LasUtility.VoxelGrid
         public int nRows { get; private set; }
         public int nCols { get; private set; }
 
+        /// <summary>
+        /// Returns a new 3D bin grid with specified parameters.
+        /// </summary>
+        /// <param name="nRows"> Y-resolution: Bin height is (maxY - minY) / nRows </param>
+        /// <param name="nCols"> X-resolution  Bin width is (maxX - minX / nCols </param>
+        /// <param name="minX"> Minimun x coodinate. This is included in the area. </param>
+        /// <param name="minY"> Minimun y coodinate. This is included in the area. </param>
+        /// <param name="maxX"> Maximum x coodinate. This is NOT included in the area. I.e. [minX, maxX[ </param>
+        /// <param name="maxY"> Maximum y coodinate. This is NOT included in the area. I.e. [minY, maxY[ </param>
+        /// <returns></returns>
         public static VoxelGrid CreateGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
             Envelope extent = new (minX, maxX, minY, maxY);
@@ -64,7 +76,7 @@ namespace LasUtility.VoxelGrid
             return voxelGrid;
         }
 
-        private bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
+        public bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
         {
             RcIndex rc = _bounds.ProjToCell(new Coordinate(x, y));
             iRow = rc.Row;
@@ -342,6 +354,24 @@ namespace LasUtility.VoxelGrid
             }
 
             return ret;
+        }
+
+        public void Serialize(string sFilename)
+        {
+            BinaryFormatter formatter = new();
+
+            using FileStream fs = new (sFilename, FileMode.Create, FileAccess.Write);
+
+            formatter.Serialize(fs, this);
+        }
+
+        public static VoxelGrid Deserialize(string sFilename)
+        {
+            BinaryFormatter formatter = new ();
+
+            using FileStream fs = new (sFilename, FileMode.Open, FileAccess.Read);
+
+            return (VoxelGrid)formatter.Deserialize(fs);
         }
     }
 }
