@@ -22,9 +22,9 @@ namespace LasUtility.Tests
             double dMaxY = 20.0; // 20.0 is outside the area, but 19.999999 is inside.
             double dEps = 0.00000001;
 
-            LasPoint p1 = new LasPoint() { x = dMinX, y = dMinY, z = 100 };
-            LasPoint p2 = new LasPoint() { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
-            LasPoint p3 = new LasPoint() { x = dMinX + 5, y = dMaxY - dEps, z = 5 };
+            LasPoint p1 = new () { x = dMinX, y = dMinY, z = 100 };
+            LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
+            LasPoint p3 = new () { x = dMinX + 5, y = dMaxY - dEps, z = 5 };
 
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
 
@@ -32,9 +32,7 @@ namespace LasUtility.Tests
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
             Assert.True(grid.AddPoint(p3.x, p3.y, p3.z, p1.classification, true));
 
-            int iRow, jCol;
-
-            grid.GetGridIndexes(p1.x, p1.y, out iRow, out jCol);
+            grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
             Assert.Equal(p1.z, grid.GetGroundMedian(iRow, jCol));
 
             grid.GetGridIndexes(p2.x, p2.y, out iRow, out jCol);
@@ -61,9 +59,9 @@ namespace LasUtility.Tests
             double dMaxY = 200000.0; // 200000.0 is outside the area, but 199999.999999 is inside.
             double dEps = 0.000001;
 
-            LasPoint p1 = new LasPoint() { x = dMinX, y = dMinY, z = 100 };
-            LasPoint p2 = new LasPoint() { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
-            LasPoint p3 = new LasPoint() { x = dMinX + 5, y = dMinY + 55000, z = 5 };
+            LasPoint p1 = new () { x = dMinX, y = dMinY, z = 100 };
+            LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
+            LasPoint p3 = new () { x = dMinX + 5, y = dMinY + 55000, z = 5 };
 
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
 
@@ -84,7 +82,6 @@ namespace LasUtility.Tests
         {
             string sTestName = "LoadPoints";
             string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
-            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
 
             string sInputFilename = Path.Combine(sTestInputFoldername, "points.obj");
 
@@ -94,15 +91,13 @@ namespace LasUtility.Tests
             double dMaxY = 200000.0; // 200000.0 is outside the area, but 199999.999999 is inside.
             double dEps = 0.000001;
 
-            LasPoint p1 = new LasPoint() { x = dMinX, y = dMinY, z = 100 };
-            LasPoint p2 = new LasPoint() { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
-            LasPoint p3 = new LasPoint() { x = dMinX + 5, y = dMinY + 55000, z = 5 };
-
-            int iRow, jCol;
+            LasPoint p1 = new() { x = dMinX, y = dMinY, z = 100 };
+            LasPoint p2 = new() { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
+            LasPoint p3 = new() { x = dMinX + 5, y = dMinY + 55000, z = 5 };
 
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.Deserialize(sInputFilename);
 
-            grid.GetGridIndexes(p1.x, p1.y, out iRow, out jCol);
+            grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
             Assert.Equal(p1.z, grid.GetGroundMedian(iRow, jCol));
 
             grid.GetGridIndexes(p2.x, p2.y, out iRow, out jCol);

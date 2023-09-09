@@ -15,8 +15,8 @@ namespace LasUtility.VoxelGrid
 
         public Bin()
         {
-            GroundPoints = new List<BinPoint>();
-            OtherPoints = new List<BinPoint>();
+            GroundPoints = new List<BinPoint>(2);
+            OtherPoints = new List<BinPoint>(2);
         }
 
         public void AddPoint(double z, byte classification, bool IsGroundPoint)
@@ -29,6 +29,18 @@ namespace LasUtility.VoxelGrid
                 OtherPoints.Add(point);
         }
 
+        /// <summary>
+        /// Unallocate unused memory reservations
+        /// </summary>
+        public void Trim()
+        {
+            GroundPoints.TrimExcess();
+            OtherPoints.TrimExcess();
+        }
+
+        /// <summary>
+        /// Sort points in order to get the median
+        /// </summary>
         public void OrderPointsFromHighestToLowest()
         {
 

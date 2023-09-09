@@ -14,6 +14,8 @@ namespace LasUtility.VoxelGrid
         IRasterBounds _bounds;
         public Bin[][] _grid;
 
+        private bool _bIsSorted = true;
+
         public int nRows { get; private set; }
         public int nCols { get; private set; }
 
@@ -98,6 +100,8 @@ namespace LasUtility.VoxelGrid
 
         public bool AddPoint(double x, double y, double z, byte classification, bool IsGroundPoint)
         {
+            _bIsSorted = false;
+
             bool IsAdded = false;
 
             if (GetGridIndexes(x, y, out int iRow, out int jCol))
@@ -223,15 +227,21 @@ namespace LasUtility.VoxelGrid
             file.WriteLine("NODATA_value  " + noDataValue);
         }
 
-        public void SortFromHighestToLowest()
+        /// <summary>
+        /// Run after you are done with adding new points.
+        /// </summary>
+        public void SortAndTrim()
         {
             foreach (Bin[] row in _grid)
             {
                 foreach (Bin b in row)
                 {
                     b.OrderPointsFromHighestToLowest();
+                    b.Trim();
                 }
             }
+
+            _bIsSorted = true;
         }
 
         public List<BinPoint> GetOtherPoints(int iRow, int jCol)
@@ -259,6 +269,9 @@ namespace LasUtility.VoxelGrid
 
         public BinPoint GetGroundMedianOrRerefencePoint(int iRow, int jCol)
         {
+            if (!_bIsSorted)
+                throw new Exception("VoxelGrid: Call SortAndTrim first.");
+
             BinPoint p = _grid[iRow][jCol].GetGroundMedianPoint();
 
             p ??= _grid[iRow][jCol].GroundReference;
@@ -266,8 +279,11 @@ namespace LasUtility.VoxelGrid
             return p;
         }
 
-        private static double GetGroundMedianOrRerefence(Bin b)
+        private double GetGroundMedianOrRerefence(Bin b)
         {
+            if (!_bIsSorted)
+                throw new Exception("VoxelGrid: Call SortAndTrim first.");
+
             double median = b.GetGroundMedian();
             if (double.IsNaN(median))
             {
@@ -325,6 +341,9 @@ namespace LasUtility.VoxelGrid
 
         public double GetGroundMedian(int iRow, int jCol)
         {
+            if (!_bIsSorted)
+                throw new Exception("VoxelGrid: Call SortAndTrim first.");
+
             return _grid[iRow][jCol].GetGroundMedian();
         }
 
