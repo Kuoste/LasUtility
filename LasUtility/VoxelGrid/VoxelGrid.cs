@@ -7,6 +7,7 @@ using LasUtility.Common;
 using System.Runtime.Serialization.Formatters.Binary;
 using MessagePack;
 using System.Security.Cryptography;
+using LasUtility.NlsTileName;
 
 namespace LasUtility.VoxelGrid
 {
@@ -26,9 +27,13 @@ namespace LasUtility.VoxelGrid
         [Key(4)]
         public int ColumnCount { get; set; }
 
+        [Key(5)]
+        public string Name { get; set; }
+
         /// <summary>
         /// Returns a new 3D bin grid with specified parameters.
         /// </summary>
+        /// <param name="sName"> Name of the grid </param>
         /// <param name="nRows"> Y-resolution: Bin height is (maxY - minY) / nRows </param>
         /// <param name="nCols"> X-resolution  Bin width is (maxX - minX / nCols </param>
         /// <param name="minX"> Minimun x coodinate. This is included in the area. </param>
@@ -36,7 +41,7 @@ namespace LasUtility.VoxelGrid
         /// <param name="maxX"> Maximum x coodinate. This is NOT included in the area. I.e. [minX, maxX[ </param>
         /// <param name="maxY"> Maximum y coodinate. This is NOT included in the area. I.e. [minY, maxY[ </param>
         /// <returns></returns>
-        public static VoxelGrid CreateGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        public static VoxelGrid CreateGrid(string sName, int nRows, int nCols, double minX, double minY, double maxX, double maxY)
         {
             Envelope extent = new (minX, maxX, minY, maxY);
             VoxelGrid voxelGrid = new()
@@ -45,6 +50,16 @@ namespace LasUtility.VoxelGrid
                 ColumnCount = nCols,
                 _bounds = new RasterBounds(nRows, nCols, extent)
             };
+
+            if (string.IsNullOrWhiteSpace(sName))
+            {
+                // Get name in the style of Maanmittauslaitos
+                voxelGrid.Name = NlsTileNamer.Encode((int)minX, (int)minY, (int)(maxY - minY));
+            }
+            else
+            {
+                voxelGrid.Name = sName;
+            }
 
             Bin[][] grid = new Bin[nRows][];
 
@@ -358,13 +373,15 @@ namespace LasUtility.VoxelGrid
             return ret;
         }
 
-        public void Serialize(string sFilename)
+        public void Serialize(string sDirectory)
         {
             //BinaryFormatter formatter = new();
 
             //using FileStream fs = new (sFilename, FileMode.Create, FileAccess.Write);
 
             //formatter.Serialize(fs, this);
+
+            string sFilename = Path.Combine(sDirectory, Name + ".obj");
 
             byte[] bytes = MessagePackSerializer.Serialize(this);
 

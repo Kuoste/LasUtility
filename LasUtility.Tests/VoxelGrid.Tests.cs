@@ -26,7 +26,7 @@ namespace LasUtility.Tests
             LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
             LasPoint p3 = new () { x = dMinX + 5, y = dMaxY - dEps, z = 5 };
 
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
 
             Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
@@ -65,7 +65,7 @@ namespace LasUtility.Tests
             LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
             LasPoint p3 = new () { x = dMinX + 5, y = dMinY + 55000, z = 5 };
 
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
 
             Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
@@ -73,7 +73,7 @@ namespace LasUtility.Tests
 
             grid.SortAndTrim();
 
-            grid.Serialize(sOutputFilename);
+            grid.Serialize(sTestOutputFoldername);
 
             Assert.True(File.Exists(sOutputFilename));
             Assert.True(File.Exists(sInputFilename));
@@ -109,6 +109,8 @@ namespace LasUtility.Tests
 
             grid.GetGridIndexes(p3.x, p3.y, out iRow, out jCol);
             Assert.Equal(p3.z, grid.GetGroundMedian(iRow, jCol));
+
+            Assert.Equal("points", grid.Name);
         }
     }
 }
