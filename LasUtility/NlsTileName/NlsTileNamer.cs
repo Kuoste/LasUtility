@@ -26,48 +26,48 @@ namespace LasUtility.NlsTileName
         /// The min coordinate of the starting tile if it was full sized. Actual coordinate is -76000 + 192000/2 = 20000,
         /// but use this for simplier calculations.
         /// </summary>
-        private const int m_iStartOrigoEast = -76000;
+        private const int _iStartOrigoEast = -76000;
 
         /// <summary>
         /// The min coordinate of the starting tile K2
         /// </summary>
-        private const int m_iStartOrigoNorth = 6570000;
+        private const int _iStartOrigoNorth = 6570000;
 
 
         /// <summary>
         /// Smallest coordinate supported by the ETRS-TM35FIN system
         /// </summary>
-        private const int m_iMinEast = 20000;
+        private const int _iMinEast = 20000;
 
         /// <summary>
         /// Smallest coordinate supported by the ETRS-TM35FIN system
         /// </summary>
-        private const int m_iMinNorth = m_iStartOrigoNorth;
+        private const int _iMinNorth = _iStartOrigoNorth;
 
         /// <summary>
         /// Largest coordinate supported by the ETRS-TM35FIN system.
         /// </summary>
-        private const int m_iMaxEast = m_iStartOrigoEast + 4 * m_iStartSizeEast;
+        private const int _iMaxEast = _iStartOrigoEast + 4 * _iStartSizeEast;
 
         /// <summary>
         /// Largest coordinate supported by the ETRS-TM35FIN system.
         /// </summary>
-        private const int m_iMaxNorth = m_iStartOrigoNorth + 13 * m_iStartSizeNorth;
+        private const int _iMaxNorth = _iStartOrigoNorth + 13 * _iStartSizeNorth;
 
         /// <summary>
         /// Largest supported tile edge length.
         /// </summary>
-        private const int m_iStartSizeEast = 192000;
+        private const int _iStartSizeEast = 192000;
 
         /// <summary>
         /// Largest supported tile edge length.
         /// </summary>
-        private const int m_iStartSizeNorth = 96000;
+        private const int _iStartSizeNorth = 96000;
 
         /// <summary>
         /// Since eastward indexing starts from 2 (K2, L2, M2, ...) use this offset in calculations.
         /// </summary>
-        private const int m_iStartOffsetEast = 2;
+        private const int _iStartOffsetEast = 2;
 
         /// <summary>
         /// Calculates the coordinates of the map tile from the map tile name.
@@ -115,13 +115,13 @@ namespace LasUtility.NlsTileName
             if (iIndexEast < 2 || iIndexEast > 6)
                 throw new Exception("Digit must be between 2-6 on the second char on the map tile name");
 
-            iIndexEast -= m_iStartOffsetEast;
+            iIndexEast -= _iStartOffsetEast;
 
-            int iOrigoEast = m_iStartOrigoEast + iIndexEast * m_iStartSizeEast;
-            int iOrigoNorth = m_iStartOrigoNorth + iIndexNorth * m_iStartSizeNorth;
+            int iOrigoEast = _iStartOrigoEast + iIndexEast * _iStartSizeEast;
+            int iOrigoNorth = _iStartOrigoNorth + iIndexNorth * _iStartSizeNorth;
 
-            int iSizeEast = m_iStartSizeEast;
-            int iSizeNorth = m_iStartSizeNorth;
+            int iSizeEast = _iStartSizeEast;
+            int iSizeNorth = _iStartSizeNorth;
 
 
             bool bIsOk = DecodeRecursive(sMapTileName, iStringIndex, ref iSizeEast, ref iSizeNorth, ref iOrigoEast, ref iOrigoNorth);
@@ -320,29 +320,29 @@ namespace LasUtility.NlsTileName
 
             string sMapTileName = String.Empty;
 
-            if (iEast < m_iMinEast || iEast >= m_iMaxEast || iNorth < m_iMinNorth || iNorth >= m_iMaxNorth)
+            if (iEast < _iMinEast || iEast >= _iMaxEast || iNorth < _iMinNorth || iNorth >= _iMaxNorth)
             {
                 throw new Exception("Coordinates out of bounds");
             }
 
             // Determine the character that starts the map tile name
-            int iIndexNorth = (iNorth - m_iStartOrigoNorth) / m_iStartSizeNorth;
+            int iIndexNorth = (iNorth - _iStartOrigoNorth) / _iStartSizeNorth;
             CharsTowardsNorth96000 c = (CharsTowardsNorth96000)iIndexNorth;
             sMapTileName += Enum.GetName(typeof(CharsTowardsNorth96000), c);
 
             // Determine digit that follows the char
-            int iIndexEast = (iEast - m_iStartOrigoEast) / m_iStartSizeEast;
-            sMapTileName += (iIndexEast + m_iStartOffsetEast).ToString();
+            int iIndexEast = (iEast - _iStartOrigoEast) / _iStartSizeEast;
+            sMapTileName += (iIndexEast + _iStartOffsetEast).ToString();
 
             // Now we have calculated the name of the highest level. Return if that is enough.
-            if (iWantedSizeNorth >= m_iStartSizeNorth)
+            if (iWantedSizeNorth >= _iStartSizeNorth)
             {
                 return sMapTileName;
             }
 
             // Otherwise enter a recursive function that stops at wanted level
-            return EncodeRecursive(iEast, iNorth, iWantedSizeNorth, m_iStartSizeEast, m_iStartSizeNorth,
-                m_iStartOrigoEast + iIndexEast * m_iStartSizeEast, m_iStartOrigoNorth + iIndexNorth * m_iStartSizeNorth, sMapTileName);
+            return EncodeRecursive(iEast, iNorth, iWantedSizeNorth, _iStartSizeEast, _iStartSizeNorth,
+                _iStartOrigoEast + iIndexEast * _iStartSizeEast, _iStartOrigoNorth + iIndexNorth * _iStartSizeNorth, sMapTileName);
         }
 
         private static string EncodeRecursive(int iEast, int iNorth, int iWantedSizeKmNorth, int iSizeEast, int iSizeNorth,

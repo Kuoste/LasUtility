@@ -5,19 +5,26 @@ using System.Collections.Generic;
 using NetTopologySuite.Geometries;
 using LasUtility.Common;
 using System.Runtime.Serialization.Formatters.Binary;
+using MessagePack;
+using System.Security.Cryptography;
 
 namespace LasUtility.VoxelGrid
 {
-    [Serializable]
+    [MessagePackObject]
     public class VoxelGrid : IHeightMap
     {
-        IRasterBounds _bounds;
+        [Key(0)]
+        public IRasterBounds _bounds;
+        [Key(1)]
         public Bin[][] _grid;
 
-        private bool _bIsSorted = true;
+        [Key(2)]
+        public bool _bIsSorted = true;
 
-        public int nRows { get; private set; }
-        public int nCols { get; private set; }
+        [Key(3)]
+        public int RowCount { get; set; }
+        [Key(4)]
+        public int ColumnCount { get; set; }
 
         /// <summary>
         /// Returns a new 3D bin grid with specified parameters.
@@ -34,36 +41,12 @@ namespace LasUtility.VoxelGrid
             Envelope extent = new (minX, maxX, minY, maxY);
             VoxelGrid voxelGrid = new()
             {
-                nRows = nRows,
-                nCols = nCols,
+                RowCount = nRows,
+                ColumnCount = nCols,
                 _bounds = new RasterBounds(nRows, nCols, extent)
             };
 
             Bin[][] grid = new Bin[nRows][];
-
-            //Console.WriteLine("Lowes index center coords are x "
-            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).X + " y "
-            //    + voxelGrid._bounds.CellCenter_ToProj(0, 0).Y);
-
-            //Console.WriteLine("Lowest index bottomleft coords are x "
-            //    + voxelGrid._bounds.CellBottomLeft_ToProj(0, 0).X + " y "
-            //    + voxelGrid._bounds.CellBottomLeft_ToProj(0, 0).Y);
-
-            //Console.WriteLine("Lowest index topright coords are x "
-            //    + voxelGrid._bounds.CellTopRight_ToProj(0, 0).X + " y "
-            //    + voxelGrid._bounds.CellTopRight_ToProj(0, 0).Y);
-
-            //Console.WriteLine("Highest index center coords are x "
-            //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).X + " y "
-            //    + voxelGrid._bounds.CellCenter_ToProj(nRows - 1, nCols - 1).Y);
-
-            //Console.WriteLine("Highest index bottomleft coords are x "
-            //    + voxelGrid._bounds.CellBottomLeft_ToProj(nRows - 1, nCols - 1).X + " y "
-            //    + voxelGrid._bounds.CellBottomLeft_ToProj(nRows - 1, nCols - 1).Y);
-
-            //Console.WriteLine("Highest index topright coords are x "
-            //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).X + " y "
-            //    + voxelGrid._bounds.CellTopRight_ToProj(nRows - 1, nCols - 1).Y);
 
             for (int iRow = 0; iRow < grid.Length; iRow++)
             {
@@ -84,7 +67,7 @@ namespace LasUtility.VoxelGrid
             iRow = rc.Row;
             jCol = rc.Column;
 
-            if ((jCol >= 0 && jCol < nCols && iRow >= 0 && iRow < nRows))
+            if ((jCol >= 0 && jCol < ColumnCount && iRow >= 0 && iRow < RowCount))
                 return true;
 
             return false;
@@ -128,9 +111,9 @@ namespace LasUtility.VoxelGrid
             if (rcMin == RcIndex.Empty || rcMax == RcIndex.Empty)
                 throw new Exception();
 
-            for (int iRow = rcMin.Row; iRow < rcMax.Row; iRow++)
+            for (int iRow = rcMin.Row; iRow <= rcMax.Row; iRow++)
             {
-                for (int jCol = rcMin.Column; jCol < rcMax.Column; jCol++)
+                for (int jCol = rcMin.Column; jCol <= rcMax.Column; jCol++)
                 {
                     double median = GetGroundMedian(iRow, jCol);
 
@@ -219,10 +202,10 @@ namespace LasUtility.VoxelGrid
 
         private void WriteAscHeader(double noDataValue, StreamWriter file)
         {
-            file.WriteLine("ncols         " + nCols);
-            file.WriteLine("nrows         " + nRows);
-            file.WriteLine("xllcorner     " + _bounds.Extent.MinX);
-            file.WriteLine("yllcorner     " + _bounds.Extent.MinY);
+            file.WriteLine("ncols         " + ColumnCount);
+            file.WriteLine("nrows         " + RowCount);
+            file.WriteLine("xllcorner     " + _bounds.MinX);
+            file.WriteLine("yllcorner     " + _bounds.MinY);
             file.WriteLine("cellsize      " + _bounds.CellWidth);
             file.WriteLine("NODATA_value  " + noDataValue);
         }
@@ -315,10 +298,10 @@ namespace LasUtility.VoxelGrid
                 iRowMin = 0;
             if (jColMin < 0)
                 jColMin = 0;
-            if (iRowMax > nRows - 1)
-                iRowMax = nRows - 1;
-            if (jColMax > nCols - 1)
-                jColMax = nCols - 1;
+            if (iRowMax > RowCount - 1)
+                iRowMax = RowCount - 1;
+            if (jColMax > ColumnCount - 1)
+                jColMax = ColumnCount - 1;
 
             double centerHeight = GetHighestPointInClassRange(iRowCenter, jColCenter, lowestClass, highestClass).Z;
 
@@ -377,20 +360,28 @@ namespace LasUtility.VoxelGrid
 
         public void Serialize(string sFilename)
         {
-            BinaryFormatter formatter = new();
+            //BinaryFormatter formatter = new();
 
-            using FileStream fs = new (sFilename, FileMode.Create, FileAccess.Write);
+            //using FileStream fs = new (sFilename, FileMode.Create, FileAccess.Write);
 
-            formatter.Serialize(fs, this);
+            //formatter.Serialize(fs, this);
+
+            byte[] bytes = MessagePackSerializer.Serialize(this);
+
+            File.WriteAllBytes(sFilename, bytes);
         }
 
         public static VoxelGrid Deserialize(string sFilename)
         {
-            BinaryFormatter formatter = new ();
+            //BinaryFormatter formatter = new ();
 
-            using FileStream fs = new (sFilename, FileMode.Open, FileAccess.Read);
+            //using FileStream fs = new (sFilename, FileMode.Open, FileAccess.Read);
 
-            return (VoxelGrid)formatter.Deserialize(fs);
+            //return (VoxelGrid)formatter.Deserialize(fs);
+
+            byte[] bytes = File.ReadAllBytes(sFilename);
+
+            return MessagePackSerializer.Deserialize<VoxelGrid>(bytes);
         }
     }
 }

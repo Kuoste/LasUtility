@@ -15,13 +15,13 @@ namespace LasUtility.ShapefileRasteriser
 {
     public class Rasteriser : IHeightMap
     {
-        const int _noDataValue = 0;
+        private const int _iNoDataValue = 0;
 
-        readonly Dictionary<int, byte> _nlsPolygonClasses;
-        readonly Dictionary<int, byte> _nlsLineClasses;
+        private readonly Dictionary<int, byte> _nlsPolygonClasses;
+        private readonly Dictionary<int, byte> _nlsLineClasses;
 
-        byte[][] _raster;
-        IRasterBounds _bounds;
+        private byte[][] _raster;
+        private IRasterBounds _bounds;
 
         public Rasteriser()
         {
@@ -86,13 +86,12 @@ namespace LasUtility.ShapefileRasteriser
 
             foreach (var filename in filenames)
             {
-                using (ShapefileReader reader = Shapefile.OpenRead(filename))
-                {
-                    if (extent == null)
-                        extent = reader.BoundingBox;
-                    else
-                        extent.ExpandToInclude(reader.BoundingBox);
-                }
+                using ShapefileReader reader = Shapefile.OpenRead(filename);
+
+                if (extent == null)
+                    extent = reader.BoundingBox;
+                else
+                    extent.ExpandToInclude(reader.BoundingBox);
             }
 
 
@@ -209,16 +208,16 @@ namespace LasUtility.ShapefileRasteriser
 
         public void WriteAsAscii(string fullFileName)
         {
-            using StreamWriter file = new StreamWriter(fullFileName);
+            using StreamWriter file = new (fullFileName);
 
-            file.WriteLine("ncols         " + _bounds.NumColumns);
-            file.WriteLine("nrows         " + _bounds.NumRows);
-            file.WriteLine("xllcorner     " + _bounds.Extent.MinX);
-            file.WriteLine("yllcorner     " + _bounds.Extent.MinY);
+            file.WriteLine("ncols         " + _bounds.ColumnCount);
+            file.WriteLine("nrows         " + _bounds.RowCount);
+            file.WriteLine("xllcorner     " + _bounds.MinX);
+            file.WriteLine("yllcorner     " + _bounds.MinY);
             file.WriteLine("cellsize      " + _bounds.CellWidth);
-            file.WriteLine("NODATA_value  " + _noDataValue);
+            file.WriteLine("NODATA_value  " + _iNoDataValue);
 
-            for (int iRow = _bounds.NumRows - 1; iRow >= 0; --iRow)
+            for (int iRow = _bounds.RowCount - 1; iRow >= 0; --iRow)
             {
                 file.WriteLine(String.Join(" ", _raster[iRow]));
             }
@@ -326,13 +325,13 @@ namespace LasUtility.ShapefileRasteriser
         private void CreaterRaster(Envelope extent)
         {
             _bounds = new RasterBounds((int)extent.Height, (int)extent.Width, extent);
-            _raster = new byte[_bounds.NumRows][];
+            _raster = new byte[_bounds.RowCount][];
 
-            for (int iRow = 0; iRow < _bounds.NumRows; iRow++)
+            for (int iRow = 0; iRow < _bounds.RowCount; iRow++)
             {
-                _raster[iRow] = new byte[_bounds.NumColumns];
-                for (int jCol = 0; jCol < _bounds.NumColumns; jCol++)
-                    _raster[iRow][jCol] = _noDataValue;
+                _raster[iRow] = new byte[_bounds.ColumnCount];
+                for (int jCol = 0; jCol < _bounds.ColumnCount; jCol++)
+                    _raster[iRow][jCol] = _iNoDataValue;
             }
         }
 
@@ -346,7 +345,7 @@ namespace LasUtility.ShapefileRasteriser
                 return double.NaN;
             }
 
-            if (_raster[rc.Row][rc.Column] == _noDataValue)
+            if (_raster[rc.Row][rc.Column] == _iNoDataValue)
                 return double.NaN;
 
             return _raster[rc.Row][rc.Column];

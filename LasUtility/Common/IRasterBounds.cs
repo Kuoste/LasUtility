@@ -2,13 +2,17 @@
 
 namespace LasUtility.Common
 {
-    internal interface IRasterBounds
+    [MessagePack.Union(0, typeof(RasterBounds))]
+    public interface IRasterBounds
     {
-        int NumColumns { get; }
-        int NumRows { get; }
+        int ColumnCount { get; }
+        int RowCount { get; }
         double CellWidth { get; }
         double CellHeight { get; }
-        Envelope Extent { get; }
+        double MinX { get; }
+        double MaxX { get; }
+        double MinY { get; }
+        double MaxY { get; }
 
         RcIndex ProjToCell(Coordinate coordinate);
         Coordinate CellBottomLeftToProj(int iRow, int jCol);

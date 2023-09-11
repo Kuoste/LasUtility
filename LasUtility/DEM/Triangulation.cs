@@ -132,7 +132,7 @@ namespace LasUtility.DEM
         //    return polygon.Intersects(point);
         //}
 
-        private static double sign(Point p1, Point p2, Point p3)
+        private static double Sign(Point p1, Point p2, Point p3)
         {
             return (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
         }
@@ -148,9 +148,9 @@ namespace LasUtility.DEM
             double d1, d2, d3;
             bool has_neg, has_pos;
 
-            d1 = sign(pt, vertices[0].Point, vertices[1].Point);
-            d2 = sign(pt, vertices[1].Point, vertices[2].Point);
-            d3 = sign(pt, vertices[2].Point, vertices[0].Point);
+            d1 = Sign(pt, vertices[0].Point, vertices[1].Point);
+            d2 = Sign(pt, vertices[1].Point, vertices[2].Point);
+            d3 = Sign(pt, vertices[2].Point, vertices[0].Point);
 
             has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
             has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);

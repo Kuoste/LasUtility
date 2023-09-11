@@ -5,21 +5,8 @@ namespace LasUtility.LAS
 {
     public class LasZipFileReader : ILasFileReader
     {
-        private laszip_dll _lasZip;
+        private readonly laszip_dll _lasZip;
         private bool _isCompressed;
-
-        //double _readingLimitMinX = Double.NaN;
-        //double _readingLimitMinY = Double.NaN;
-        //double _readingLimitMaxY = Double.NaN;
-        //double _readingLimitMaxX = Double.NaN;
-
-        //public void SetReadingLimits(double minY, double minX, double maxY, double maxX)
-        //{
-        //    _readingLimitMinX = minX;
-        //    _readingLimitMinY = minY;
-        //    _readingLimitMaxY = maxY;
-        //    _readingLimitMaxX = maxX;
-        //} 
 
         public LasZipFileReader()
         {
@@ -53,7 +40,7 @@ namespace LasUtility.LAS
 
         public LasPoint ReadPoint()
         {
-            LasPoint p = new LasPoint();
+            LasPoint p = new ();
 
             if (GetNextPoint() == false)
                 return null;
@@ -81,40 +68,17 @@ namespace LasUtility.LAS
 
         private bool GetNextPoint()
         {
-            long nPointsRead, nPointsInFile;
-            _lasZip.laszip_get_number_of_point(out nPointsInFile);
-            _lasZip.laszip_get_point_count(out nPointsRead);
+            _lasZip.laszip_get_number_of_point(out long nPointsInFile);
+            _lasZip.laszip_get_point_count(out long nPointsRead);
 
-            //do
-            //{
             if (nPointsRead >= nPointsInFile)
                     return false;
 
             if (_lasZip.laszip_read_point() != 0)
                 throw new Exception(_lasZip.laszip_get_error());
 
-            //    nPointsRead++;
-            //}
-            //while (!IsPointInBounds());
-
             return true;
         }
-
-        //private bool IsPointInBounds()
-        //{
-        //    if (_readingLimitMinX == Double.NaN)
-        //        return true;
-
-        //    if (_lasZip.point.Y > _readingLimitMaxY ||
-        //        _lasZip.point.Y < _readingLimitMinY ||
-        //        _lasZip.point.X > _readingLimitMaxX ||
-        //        _lasZip.point.X < _readingLimitMinX)
-        //    {
-        //        return false;
-        //    }
-
-        //    return true;
-        //}
 
         public double MinX
         {

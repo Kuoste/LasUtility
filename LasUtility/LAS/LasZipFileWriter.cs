@@ -5,7 +5,7 @@ namespace LasUtility.LAS
 {
     public class LasZipFileWriter
     {
-        private laszip_dll _lasZip;
+        private readonly laszip_dll _lasZip;
 
         public LasZipFileWriter()
         {

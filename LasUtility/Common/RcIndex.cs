@@ -1,6 +1,6 @@
 ﻿namespace LasUtility.Common
 {
-    internal class RcIndex
+    public class RcIndex
     {
         // Empty is Row and Column with int min value
         internal static readonly RcIndex Empty = new (int.MinValue, int.MinValue);

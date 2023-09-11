@@ -1,17 +1,22 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace LasUtility.VoxelGrid
 {
-    [Serializable]
+    [MessagePackObject]
     public class Bin
     {
+        [Key(0)]
         public BinPoint SurfaceReference { get; set; }
+        [Key(1)]
         public BinPoint GroundReference { get; set; }
 
-        public List<BinPoint> GroundPoints { get; private set; }
-        public List<BinPoint> OtherPoints { get; private set; }
+        [Key(2)]
+        public List<BinPoint> GroundPoints { get; set; }
+        [Key(3)]
+        public List<BinPoint> OtherPoints { get; set; }
 
         public Bin()
         {
@@ -21,7 +26,7 @@ namespace LasUtility.VoxelGrid
 
         public void AddPoint(double z, byte classification, bool IsGroundPoint)
         {
-            BinPoint point = new BinPoint() { Z = z, Class = classification };
+            BinPoint point = new () { Z = z, Class = classification };
 
             if (IsGroundPoint)
                 GroundPoints.Add(point);
@@ -72,22 +77,25 @@ namespace LasUtility.VoxelGrid
         }
     }
 
-    [Serializable]
+    [MessagePackObject]
     public class BinPoint : IComparable<BinPoint>
     {
-        private int _z;
+        [Key(0)]
+        public int ZInCentimeters { get; set; }
 
+        [Key(1)]
         public byte Class { get; set; }
 
+        [IgnoreMember]
         public double Z
         {
-            get { return _z / 100D; }
-            set { _z = (int)Math.Round(value * 100); }
+            get { return ZInCentimeters / 100D; }
+            set { ZInCentimeters = (int)Math.Round(value * 100); }
         }
 
         public int CompareTo(BinPoint b)
         {
-            return _z.CompareTo(b._z);
+            return ZInCentimeters.CompareTo(b.ZInCentimeters);
         }
     }
 }

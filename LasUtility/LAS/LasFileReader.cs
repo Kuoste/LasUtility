@@ -39,32 +39,31 @@ namespace LasUtility.LAS
             if (!File.Exists(fullFilePath))
                 throw new FileNotFoundException();
 
-            using (BinaryReader reader = 
-                new BinaryReader(File.OpenRead(fullFilePath)))
+            using BinaryReader reader = new (File.OpenRead(fullFilePath));
+
+            byte[] value = new byte[200];
+            string signature = new (reader.ReadChars(4));
+
+            if (!signature.Equals("LASF"))
+                throw new InvalidDataException("File not recognized as a LAS file");
+
+            value = reader.ReadBytes(20);
+
+            int versionMajor = reader.ReadByte();
+            int versionMinor = reader.ReadByte();
+
+            if (versionMajor != 1 || versionMinor < 0 || versionMinor > 4)
             {
-                byte[] value = new byte[200];
-                string signature = new string(reader.ReadChars(4));
-                if (!signature.Equals("LASF"))
-                    throw new InvalidDataException("File not recognized as a LAS file");
-
-                value = reader.ReadBytes(20);
-
-                int versionMajor = reader.ReadByte();
-                int versionMinor = reader.ReadByte();
-
-                if (versionMajor != 1 || versionMinor < 0 || versionMinor > 4)
-                {
-                    throw new InvalidDataException(String.Format("File is LAS {0}.{1} Format. Only LAS 1.x is supported.",
-                        versionMajor, versionMinor));
-                }
-
-                value = reader.ReadBytes(153);
-
-                MaxX = reader.ReadDouble();
-                MinX = reader.ReadDouble();
-                MaxY = reader.ReadDouble();
-                MinY = reader.ReadDouble();
+                throw new InvalidDataException(String.Format("File is LAS {0}.{1} Format. Only LAS 1.x is supported.",
+                    versionMajor, versionMinor));
             }
+
+            value = reader.ReadBytes(153);
+
+            MaxX = reader.ReadDouble();
+            MinX = reader.ReadDouble();
+            MaxY = reader.ReadDouble();
+            MinY = reader.ReadDouble();
         }
 
         public LasPoint ReadPoint()

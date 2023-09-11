@@ -8,25 +8,25 @@ namespace LasUtility.DEM
     internal class TriangleIndexGrid
     {
         List<int>[][] _grid;
-        private readonly int _nRows;
-        private readonly int _nCols;
+        private readonly int _iRowCount;
+        private readonly int _iColCount;
 
         public IRasterBounds Bounds { get; private set; }
 
-        public TriangleIndexGrid(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        public TriangleIndexGrid(int iRowCount, int iColCount, double minX, double minY, double maxX, double maxY)
         {
-            _nRows = nRows;
-            _nCols = nCols;
+            _iRowCount = iRowCount;
+            _iColCount = iColCount;
 
             Envelope extent = new (minX, maxX, minY, maxY);
-            Bounds = new RasterBounds(nRows, nCols, extent);
+            Bounds = new RasterBounds(iRowCount, iColCount, extent);
         }
 
         public void ResetGrid()
         {
-            _grid = new List<int>[_nRows][];
-            for (int i = 0; i < _nRows; i++)
-                _grid[i] = new List<int>[_nCols];
+            _grid = new List<int>[_iRowCount][];
+            for (int i = 0; i < _iRowCount; i++)
+                _grid[i] = new List<int>[_iColCount];
         }
 
         private void CreateGrid()
@@ -40,7 +40,7 @@ namespace LasUtility.DEM
             iRow = rc.Row;
             jCol = rc.Column;
 
-            if ((jCol >= 0 && jCol < _nCols && iRow >= 0 && iRow < _nRows))
+            if ((jCol >= 0 && jCol < _iColCount && iRow >= 0 && iRow < _iRowCount))
                 return true;
 
             return false;

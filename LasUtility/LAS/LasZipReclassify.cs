@@ -1,49 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LasUtility.Common;
+﻿using LasUtility.Common;
 using laszip.net;
 
 namespace LasUtility.LAS
 {
     public class LasZipReclassify
     {
-        private string lasFullFilename;
-        private string outputLasFileName;
-        private IHeightMap classGrid;
+        private readonly string _sLasFullFilename;
+        private readonly string _sOutputLasFileName;
+        private readonly IHeightMap _classGrid;
 
-        const int _lasGroundClass = 2;
+        const int _iLasGroundClass = 2;
 
         public LasZipReclassify(string lasFullFilename, string outputLasFileName, IHeightMap classGrid)
         {
-            this.lasFullFilename = lasFullFilename;
-            this.outputLasFileName = outputLasFileName;
-            this.classGrid = classGrid;
+            _sLasFullFilename = lasFullFilename;
+            _sOutputLasFileName = outputLasFileName;
+            _classGrid = classGrid;
         }
 
         public long Run()
         {
-            LasZipFileReader reader = new LasZipFileReader();
-            LasZipFileWriter writer = new LasZipFileWriter();
+            LasZipFileReader reader = new ();
+            LasZipFileWriter writer = new ();
 
-            reader.OpenReader(lasFullFilename);
+            reader.OpenReader(_sLasFullFilename);
             writer.SetHeader(reader.GetHeader());
-            writer.OpenWriter(outputLasFileName, true);
+            writer.OpenWriter(_sOutputLasFileName, true);
 
             laszip_point p;
             double[] scaledCoords = new double[3];
             long nReclassified = 0;
             while ((p = reader.ReadPointAsLasZipPoint(ref scaledCoords)) != null)
             {
-                double classValue = classGrid.GetHeight(scaledCoords[0], scaledCoords[1]);
+                double classValue = _classGrid.GetHeight(scaledCoords[0], scaledCoords[1]);
 
                 if (!double.IsNaN(classValue))
                 {
                     if (classValue >= 70 && classValue < 100)
                     {
-                        if (p.classification == _lasGroundClass)
+                        if (p.classification == _iLasGroundClass)
                         {
                             p.classification = (byte)classValue;
                         }

@@ -32,6 +32,8 @@ namespace LasUtility.Tests
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
             Assert.True(grid.AddPoint(p3.x, p3.y, p3.z, p1.classification, true));
 
+            grid.SortAndTrim();
+
             grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
             Assert.Equal(p1.z, grid.GetGroundMedian(iRow, jCol));
 
@@ -68,6 +70,8 @@ namespace LasUtility.Tests
             Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
             Assert.True(grid.AddPoint(p3.x, p3.y, p3.z, p1.classification, true));
+
+            grid.SortAndTrim();
 
             grid.Serialize(sOutputFilename);
 
