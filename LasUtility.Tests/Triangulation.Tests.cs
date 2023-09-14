@@ -43,7 +43,9 @@ namespace LasUtility.Tests
 
             int iResolution = 100;
 
-            SurfaceTriangulation tri = new (iResolution, iResolution, minX, minY, maxX, maxY);
+            SurfaceTriangulation tri = new (iResolution, iResolution, 
+                Math.Floor(minX), Math.Floor(minY), 
+                Math.Ceiling(maxX), Math.Ceiling(maxY));
 
             reader.OpenReader(sLasFullFileName);
 

@@ -1,4 +1,6 @@
-﻿using LasUtility.LAS;
+﻿using LasUtility.Common;
+using LasUtility.LAS;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,7 @@ namespace LasUtility.Tests
         public void AddPoints_WhenOnEdges_AndSaveAndLoad_ShouldBeTheSame()
         {
             int iGridSize = 10;
+
             double dMinX = 0.0;
             double dMinY = 10.0;
             double dMaxX = 10.0; // 10.0 is outside the area, but 9.999999 is inside.
@@ -26,7 +29,8 @@ namespace LasUtility.Tests
             LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
             LasPoint p3 = new () { x = dMinX + 5, y = dMaxY - dEps, z = 5 };
 
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
+            Envelope env = new(dMinX, dMaxX, dMinY, dMaxY); 
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, env);
 
             Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
@@ -65,7 +69,9 @@ namespace LasUtility.Tests
             LasPoint p2 = new () { x = dMaxX - dEps, y = dMaxY - dEps, z = 10 };
             LasPoint p3 = new () { x = dMinX + 5, y = dMinY + 55000, z = 5 };
 
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, dMinX, dMinY, dMaxX, dMaxY);
+            Envelope env = new(dMinX, dMaxX, dMinY, dMaxY);
+            string sGridName = "points";
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(sGridName, iGridSize, iGridSize, env);
 
             Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));

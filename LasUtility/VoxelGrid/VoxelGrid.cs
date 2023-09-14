@@ -4,10 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using NetTopologySuite.Geometries;
 using LasUtility.Common;
-using System.Runtime.Serialization.Formatters.Binary;
 using MessagePack;
-using System.Security.Cryptography;
-using LasUtility.NlsTileName;
 
 namespace LasUtility.VoxelGrid
 {
@@ -19,16 +16,30 @@ namespace LasUtility.VoxelGrid
         [Key(1)]
         public Bin[][] _grid;
 
+        [IgnoreMember]
+        public IRasterBounds Bounds => _bounds;
+        [IgnoreMember]
+        public Bin[][] Grid => _grid;
+
         [Key(2)]
-        public bool _bIsSorted = true;
+        public bool _bIsSorted;
 
         [Key(3)]
-        public int RowCount { get; set; }
-        [Key(4)]
-        public int ColumnCount { get; set; }
+        public string Name;
 
-        [Key(5)]
-        public string Name { get; set; }
+        [Key(4)]
+        public string Version { get; set; }
+
+        public static VoxelGrid CreateGrid(string sName, string sVersion, IRasterBounds bounds, Bin[][] grid)
+        {
+            return new()
+            {
+                _bounds = bounds,
+                _grid = grid,
+                Name = sName,
+                Version = sVersion
+            };
+        }
 
         /// <summary>
         /// Returns a new 3D bin grid with specified parameters.
@@ -41,26 +52,8 @@ namespace LasUtility.VoxelGrid
         /// <param name="maxX"> Maximum x coodinate. This is NOT included in the area. I.e. [minX, maxX[ </param>
         /// <param name="maxY"> Maximum y coodinate. This is NOT included in the area. I.e. [minY, maxY[ </param>
         /// <returns></returns>
-        public static VoxelGrid CreateGrid(string sName, int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        public static VoxelGrid CreateGrid(string sName, int nRows, int nCols, Envelope extent)
         {
-            Envelope extent = new (minX, maxX, minY, maxY);
-            VoxelGrid voxelGrid = new()
-            {
-                RowCount = nRows,
-                ColumnCount = nCols,
-                _bounds = new RasterBounds(nRows, nCols, extent)
-            };
-
-            if (string.IsNullOrWhiteSpace(sName))
-            {
-                // Get name in the style of Maanmittauslaitos
-                voxelGrid.Name = NlsTileNamer.Encode((int)minX, (int)minY, (int)(maxY - minY));
-            }
-            else
-            {
-                voxelGrid.Name = sName;
-            }
-
             Bin[][] grid = new Bin[nRows][];
 
             for (int iRow = 0; iRow < grid.Length; iRow++)
@@ -71,9 +64,12 @@ namespace LasUtility.VoxelGrid
                     grid[iRow][jCol] = new Bin();
             }        
 
-            voxelGrid._grid = grid;
-
-            return voxelGrid;
+            return new()
+            {
+                _bounds = new RasterBounds(nRows, nCols, extent),
+                Name = sName,
+                _grid = grid
+            };
         }
 
         public bool GetGridIndexes(double x, double y, out int iRow, out int jCol)
@@ -82,7 +78,7 @@ namespace LasUtility.VoxelGrid
             iRow = rc.Row;
             jCol = rc.Column;
 
-            if ((jCol >= 0 && jCol < ColumnCount && iRow >= 0 && iRow < RowCount))
+            if ((jCol >= 0 && jCol < _bounds.ColumnCount && iRow >= 0 && iRow < _bounds.RowCount))
                 return true;
 
             return false;
@@ -217,8 +213,8 @@ namespace LasUtility.VoxelGrid
 
         private void WriteAscHeader(double noDataValue, StreamWriter file)
         {
-            file.WriteLine("ncols         " + ColumnCount);
-            file.WriteLine("nrows         " + RowCount);
+            file.WriteLine("ncols         " + _bounds.ColumnCount);
+            file.WriteLine("nrows         " + _bounds.RowCount);
             file.WriteLine("xllcorner     " + _bounds.MinX);
             file.WriteLine("yllcorner     " + _bounds.MinY);
             file.WriteLine("cellsize      " + _bounds.CellWidth);
@@ -313,10 +309,10 @@ namespace LasUtility.VoxelGrid
                 iRowMin = 0;
             if (jColMin < 0)
                 jColMin = 0;
-            if (iRowMax > RowCount - 1)
-                iRowMax = RowCount - 1;
-            if (jColMax > ColumnCount - 1)
-                jColMax = ColumnCount - 1;
+            if (iRowMax > _bounds.RowCount - 1)
+                iRowMax = _bounds.RowCount - 1;
+            if (jColMax > _bounds.ColumnCount - 1)
+                jColMax = _bounds.ColumnCount - 1;
 
             double centerHeight = GetHighestPointInClassRange(iRowCenter, jColCenter, lowestClass, highestClass).Z;
 
@@ -381,11 +377,23 @@ namespace LasUtility.VoxelGrid
 
             //formatter.Serialize(fs, this);
 
-            string sFilename = Path.Combine(sDirectory, Name + ".obj");
+            string sFilename = Path.Combine(sDirectory, Name);
+
+            if (!string.IsNullOrWhiteSpace(Version))
+                sFilename += "_v" + Version;
+
+            sFilename += ".obj";
+
+            string sFilenameTemp = sFilename + ".tmp";
 
             byte[] bytes = MessagePackSerializer.Serialize(this);
 
-            File.WriteAllBytes(sFilename, bytes);
+            File.WriteAllBytes(sFilenameTemp, bytes);
+
+            if (File.Exists(sFilename))
+                File.Delete(sFilename);
+
+            File.Move(sFilenameTemp, sFilename);
         }
 
         public static VoxelGrid Deserialize(string sFilename)
