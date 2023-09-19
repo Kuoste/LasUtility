@@ -1,5 +1,6 @@
 ﻿using LasUtility.Common;
 using LasUtility.LAS;
+using LasUtility.VoxelGrid;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
@@ -32,20 +33,19 @@ namespace LasUtility.Tests
             Envelope env = new(dMinX, dMaxX, dMinY, dMaxY); 
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, env);
 
-            Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
-            Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
-            Assert.True(grid.AddPoint(p3.x, p3.y, p3.z, p1.classification, true));
-
-            grid.SortAndTrim();
+            // Ground points
+            Assert.True(grid.AddPoint(p1.x, p1.y, (float)p1.z, p1.classification, true));
+            Assert.True(grid.AddPoint(p2.x, p2.y, (float)p2.z, p1.classification, true));
+            Assert.True(grid.AddPoint(p3.x, p3.y, (float)p3.z, p1.classification, true));
 
             grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
-            Assert.Equal(p1.z, grid.GetGroundMedian(iRow, jCol));
+            Assert.Equal(p1.z, grid.GetGroundHeight(iRow, jCol));
 
             grid.GetGridIndexes(p2.x, p2.y, out iRow, out jCol);
-            Assert.Equal(p2.z, grid.GetGroundMedian(iRow, jCol));
+            Assert.Equal(p2.z, grid.GetGroundHeight(iRow, jCol));
 
             grid.GetGridIndexes(p3.x, p3.y, out iRow, out jCol);
-            Assert.Equal(p3.z, grid.GetGroundMedian(iRow, jCol));
+            Assert.Equal(p3.z, grid.GetGroundHeight(iRow, jCol));
         }
 
         [Fact]
@@ -73,9 +73,12 @@ namespace LasUtility.Tests
             string sGridName = "points";
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(sGridName, iGridSize, iGridSize, env);
 
-            Assert.True(grid.AddPoint(p1.x, p1.y, p1.z, p1.classification, true));
-            Assert.True(grid.AddPoint(p2.x, p2.y, p2.z, p1.classification, true));
-            Assert.True(grid.AddPoint(p3.x, p3.y, p3.z, p1.classification, true));
+            Assert.True(grid.AddPoint(p1.x, p1.y, (float)p1.z, p1.classification, true));
+            Assert.True(grid.AddPoint(p2.x, p2.y, (float)p2.z, p1.classification, true));
+
+            Assert.True(grid.AddPoint(p3.x, p3.y, (float)p3.z / 2, p1.classification, false));
+            Assert.True(grid.AddPoint(p3.x, p3.y, (float)p3.z * 2, p1.classification, false));
+            Assert.True(grid.AddPoint(p3.x, p3.y, (float)p3.z , p1.classification, false));
 
             grid.SortAndTrim();
 
@@ -84,7 +87,7 @@ namespace LasUtility.Tests
             Assert.True(File.Exists(sOutputFilename));
             Assert.True(File.Exists(sInputFilename));
 
-            Assert.True(Utils.FileCompare(sOutputFilename, sInputFilename));
+            Assert.True(Utils.FileCompare(sOutputFilename, sInputFilename), "Input and output files do not match");
         }
 
         [Fact]
@@ -107,14 +110,18 @@ namespace LasUtility.Tests
 
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.Deserialize(sInputFilename);
 
-            grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
-            Assert.Equal(p1.z, grid.GetGroundMedian(iRow, jCol));
+            // Verify ground points
+            Assert.Equal(p1.z, grid.GetHeight(p1.x, p1.y));
+            Assert.Equal(p2.z, grid.GetHeight(p2.x, p2.y));
 
-            grid.GetGridIndexes(p2.x, p2.y, out iRow, out jCol);
-            Assert.Equal(p2.z, grid.GetGroundMedian(iRow, jCol));
+            // Verify count of other points
+            grid.GetGridIndexes(p3.x, p3.y, out int iRow, out int jCol);
+            List<BinPoint> points = grid.GetPoints(iRow, jCol);
+            Assert.Equal(3, points.Count);
 
-            grid.GetGridIndexes(p3.x, p3.y, out iRow, out jCol);
-            Assert.Equal(p3.z, grid.GetGroundMedian(iRow, jCol));
+            // Verify other points are sorted from high to low
+            Assert.Equal(p3.z * 2, points[0].Z);
+            Assert.Equal(p3.z / 2, points[2].Z);
 
             Assert.Equal("points", grid.Name);
         }
