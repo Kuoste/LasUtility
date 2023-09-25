@@ -286,7 +286,10 @@ namespace LasUtility.VoxelGrid
             if (jColMax > _bounds.ColumnCount - 1)
                 jColMax = _bounds.ColumnCount - 1;
 
-            double centerHeight = GetHighestPointInClassRange(iRowCenter, jColCenter, lowestClass, highestClass).Z;
+            BinPoint center = GetHighestPointInClassRange(iRowCenter, jColCenter, lowestClass, highestClass);
+
+            if (center == null) 
+                return false;   
 
             for (int iRow = iRowMin; iRow <= iRowMax; iRow++)
             {
@@ -297,7 +300,7 @@ namespace LasUtility.VoxelGrid
 
                     BinPoint p = GetHighestPointInClassRange(iRow, jCol, lowestClass, highestClass);
 
-                    if (p != null && p.Z >= centerHeight)
+                    if (p != null && p.Z >= center.Z)
                         return false;
                 }
             }
