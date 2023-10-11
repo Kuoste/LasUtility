@@ -40,11 +40,10 @@ namespace LasUtility.Common
         /// <param name="extent"> Coordinate bounds of the raster. Note that upper limits are not included in the bounds, i.e. [MinX, MaxX[ and [MinY, MaxY[ </param>
         public RasterBounds(int iRowCount, int iColCount, Envelope extent)
         {
-            // Only integers are supported
-            double dEps = 0.0001;
-            if (extent.MinX % 1 > dEps || extent.MinY % 1 > dEps || extent.MaxX % 1 > dEps || extent.MaxY % 1 > dEps)
+            // Verify that the bounds are valid
+            if (extent.MinX >= extent.MaxX || extent.MinY >= extent.MaxY)
             {
-                throw new Exception("VoxelGrid.CreateGrid: Only interger bounds are accepted");
+                throw new Exception("RasterBounds: Invalid bounds");
             }
 
             RowCount = iRowCount;
@@ -66,11 +65,10 @@ namespace LasUtility.Common
         /// <param name="dMaxY"> Upper right y coordinate. This is included in the bounds, i.e. [MinY, MaxY[ </param>
         public RasterBounds(int iRowCount, int iColCount, double dMinX, double dMinY, double dMaxX, double dMaxY)
         {
-            // Only integers are supported
-            double dEps = 0.0001;
-            if (dMinX % 1 > dEps || dMinY % 1 > dEps || dMaxX % 1 > dEps || dMaxY % 1 > dEps)
+            // Verify that the bounds are valid
+            if (dMinX >= dMaxX || dMinY >= dMaxY)
             {
-                throw new Exception("VoxelGrid.CreateGrid: Only interger bounds are accepted");
+                throw new Exception("RasterBounds: Invalid bounds");
             }
 
             RowCount = iRowCount;

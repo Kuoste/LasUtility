@@ -1,10 +1,9 @@
 ﻿using System;
-using LasUtility.Common;
 using NetTopologySuite.Geometries;
 
-namespace LasUtility.NlsTileName
+namespace LasUtility.Nls
 {
-    public class NlsTileNamer
+    public class TileNamer
     {
         enum CharsTowardsNorth96000
         {
