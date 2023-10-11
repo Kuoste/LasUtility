@@ -20,9 +20,9 @@ namespace LasUtility.Tests
             string sTestName = "ReadRaster_ShouldContainBuilding";
             string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
 
-            var rasteriser = Rasteriser.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
-            byte classification = (byte)rasteriser.GetHeight(518550, 7044465);
+            byte classification = (byte)hm.GetHeight(518550, 7044465);
             byte inputClassification = 101;
 
             Assert.Equal(inputClassification, classification);
@@ -45,9 +45,9 @@ namespace LasUtility.Tests
 
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads.asc");
 
-            var rasteriser = Rasteriser.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
-            rasteriser.WriteAsAscii(sOutputAscFilename);
+            hm.WriteAsAscii(sOutputAscFilename);
 
             Assert.True(File.Exists(sOutputAscFilename));
 
@@ -74,15 +74,51 @@ namespace LasUtility.Tests
 
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads_smaller.asc");
 
-            var rasteriser = Rasteriser.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
             int iCropInMeters = 200;
-            int iMinX = (int)rasteriser.Bounds.MinX + iCropInMeters;
-            int iMinY = (int)rasteriser.Bounds.MinY + iCropInMeters;
-            int iMaxX = (int)rasteriser.Bounds.MaxX - iCropInMeters;
-            int iMaxY = (int)rasteriser.Bounds.MaxY - iCropInMeters;
+            int iMinX = (int)hm.Bounds.MinX + iCropInMeters;
+            int iMinY = (int)hm.Bounds.MinY + iCropInMeters;
+            int iMaxX = (int)hm.Bounds.MaxX - iCropInMeters;
+            int iMaxY = (int)hm.Bounds.MaxY - iCropInMeters;
 
-            rasteriser.WriteAsAscii(sOutputAscFilename, iMinX, iMinY, iMaxX, iMaxY);
+            hm.WriteAsAscii(sOutputAscFilename, iMinX, iMinY, iMaxX, iMaxY);
+
+            Assert.True(File.Exists(sOutputAscFilename));
+
+            // Compare file contents with files in test folder
+            string sInputAscFilename = Path.Combine(sTestInputFoldername, "buildings_roads_smaller.asc");
+            Assert.True(File.Exists(sInputAscFilename), "Reference file does not exists in Input folder");
+            Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "File contents do not match");
+        }
+
+        [Fact]
+        public void AddRasterAndCrop()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            string sTestName = "AddRasterAndCrop";
+            string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
+            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
+
+            // Delete contents of output folder
+            if (Directory.Exists(sTestOutputFoldername))
+                Directory.Delete(sTestOutputFoldername, true);
+
+            Directory.CreateDirectory(sTestOutputFoldername);
+
+            string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads_smaller.asc");
+
+            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+
+            int iCropInMeters = 200;
+            int iMinX = (int)hm.Bounds.MinX + iCropInMeters;
+            int iMinY = (int)hm.Bounds.MinY + iCropInMeters;
+            int iMaxX = (int)hm.Bounds.MaxX - iCropInMeters;
+            int iMaxY = (int)hm.Bounds.MaxY - iCropInMeters;
+
+            var hmSmaller = hm.Crop(iMinX, iMinY, iMaxX, iMaxY);
+            hmSmaller.WriteAsAscii(sOutputAscFilename);
 
             Assert.True(File.Exists(sOutputAscFilename));
 

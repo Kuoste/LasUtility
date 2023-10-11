@@ -1,8 +1,5 @@
 ﻿using NetTopologySuite.Geometries;
-using NetTopologySuite.IO.Esri.Shapefiles.Readers;
-using NetTopologySuite.IO.Esri;
 using System;
-using LasUtility.ShapefileRasteriser;
 using System.IO;
 
 namespace LasUtility.Common
@@ -89,10 +86,31 @@ namespace LasUtility.Common
             shpPic.SaveImage(fullFileName);
         }
 #endif
-
-        public static Rasteriser CreateFromAscii(string fullFileName)
+        public HeightMap Crop(int iMinX, int iMinY, int iMaxX, int iMaxY)
         {
-            Rasteriser ras = new();
+            // Create a new heightmap with the new bounds
+            HeightMap hm = new();
+
+            hm.InitializeRaster(iMinX, iMinY, iMaxX, iMaxY);
+
+            // Copy values from this rasteriser to the new one
+            RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
+            RcIndex end = Bounds.ProjToCell(new Coordinate(iMaxX, iMaxY));
+            int iColumnCount = end.Column - start.Column;
+
+            for (int iRow = start.Row; iRow < end.Row; iRow++)
+            {
+                hm.Raster[iRow - start.Row] = new byte[iColumnCount];
+                Array.Copy(Raster[iRow], start.Column, hm.Raster[iRow - start.Row], 0, iColumnCount);
+            }
+
+            return hm;
+        }
+
+
+        public static HeightMap CreateFromAscii(string fullFileName)
+        {
+            HeightMap hm = new();
 
             char[] delimiters = new char[] { ' ', '\t' };
 
@@ -128,7 +146,7 @@ namespace LasUtility.Common
                                 throw new Exception("Invalid format in header " + fullFileName);
 
                             Envelope extent = new(minX, minX + nCols, minY, minY + nRows);
-                            ras.InitializeRaster(extent);
+                            hm.InitializeRaster(extent);
                             IsHeaderRead = true;
                             iRow = nRows;
                         }
@@ -145,7 +163,7 @@ namespace LasUtility.Common
                                 fullFileName, words.Length, nRows - 1 - iRow));
                         }
 
-                        ras.Raster[--iRow] = Array.ConvertAll(words, byte.Parse);
+                        hm.Raster[--iRow] = Array.ConvertAll(words, byte.Parse);
                     }
 
 
@@ -155,7 +173,7 @@ namespace LasUtility.Common
                     throw new Exception(String.Format("File {0} contains too few data rows", fullFileName));
             }
 
-            return ras;
+            return hm;
         }
 
         public void InitializeRaster(Envelope extent)
