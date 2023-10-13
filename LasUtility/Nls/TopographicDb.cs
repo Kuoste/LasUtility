@@ -1,9 +1,19 @@
 ﻿using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Net.NetworkInformation;
 
 namespace LasUtility.Nls
 {
     public static class TopographicDb
     {
+        public const int iMapTileEdgeLengthInMeters = 12000;
+
+        public const string sPrefixForTerrainType = "m_";
+        public const string sPrefixForBuildings = "r_";
+        public const string sPrefixForRoads = "l_";
+
+        public const string sPostfixForPolygon = "_p";
+        public const string sPostfixForLine = "_v";
 
         public static readonly Dictionary<int, byte> WaterLineClassesToRasterValues = new()
         {
