@@ -46,13 +46,17 @@ namespace LasUtility.Common
             file.WriteLine("cellsize      " + Bounds.CellWidth);
             file.WriteLine("NODATA_value  " + _iNoDataValue);
 
-            RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
-            RcIndex end = Bounds.ProjToCell(new Coordinate(iMaxX, iMaxY));
+            // Max values are not included in the raster
+            double dMaxX = iMaxX - RasterBounds.dEpsilon;
+            double dMaxY = iMaxY - RasterBounds.dEpsilon;
 
-            for (int iRow = end.Row - 1; iRow >= start.Row; --iRow)
+            RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
+            RcIndex end = Bounds.ProjToCell(new Coordinate(dMaxX, dMaxY));
+
+            for (int iRow = end.Row; iRow >= start.Row; --iRow)
             {
                 // Write values separated by spaces
-                file.WriteLine(String.Join(" ", Raster[iRow][start.Column..end.Column]));
+                file.WriteLine(String.Join(" ", Raster[iRow][start.Column..(end.Column + 1)]));
             }
         }
 
@@ -93,12 +97,16 @@ namespace LasUtility.Common
 
             hm.InitializeRaster(iMinX, iMinY, iMaxX, iMaxY);
 
+            // Max values are not included in the raster
+            double dMaxX = iMaxX - RasterBounds.dEpsilon;
+            double dMaxY = iMaxY - RasterBounds.dEpsilon;
+
             // Copy values from this rasteriser to the new one
             RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
-            RcIndex end = Bounds.ProjToCell(new Coordinate(iMaxX, iMaxY));
-            int iColumnCount = end.Column - start.Column;
+            RcIndex end = Bounds.ProjToCell(new Coordinate(dMaxX, dMaxY));
+            int iColumnCount = end.Column - start.Column + 1;
 
-            for (int iRow = start.Row; iRow < end.Row; iRow++)
+            for (int iRow = start.Row; iRow <= end.Row; iRow++)
             {
                 hm.Raster[iRow - start.Row] = new byte[iColumnCount];
                 Array.Copy(Raster[iRow], start.Column, hm.Raster[iRow - start.Row], 0, iColumnCount);

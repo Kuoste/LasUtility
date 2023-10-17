@@ -66,6 +66,9 @@ namespace LasUtility.ShapefileRasteriser
 
                 Envelope envelope = feature.Geometry.EnvelopeInternal;
 
+                // No need to substract epsilon from the max values since the shapefile coordinates
+                // do not contain the upper limits.
+
                 RcIndex iMin = Bounds.ProjToCell(new(envelope.MinX, envelope.MinY));
                 RcIndex iMax = Bounds.ProjToCell(new(envelope.MaxX, envelope.MaxY));
 

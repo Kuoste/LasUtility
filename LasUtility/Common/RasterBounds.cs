@@ -7,6 +7,8 @@ namespace LasUtility.Common
     [MessagePackObject]
     public class RasterBounds : IRasterBounds
     {
+        public const double dEpsilon = 0.00000001;
+
         [Key(0)]
         public int RowCount { get; }
         [Key(1)]

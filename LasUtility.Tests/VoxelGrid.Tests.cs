@@ -31,7 +31,7 @@ namespace LasUtility.Tests
             LasPoint p3 = new () { x = dMinX + 5, y = dMaxY - dEps, z = 5 };
 
             Envelope env = new(dMinX, dMaxX, dMinY, dMaxY); 
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid("points", iGridSize, iGridSize, env);
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, env);
 
             // Ground points
             Assert.True(grid.AddPoint(p1.x, p1.y, (float)p1.z, p1.classification, true));
@@ -70,8 +70,7 @@ namespace LasUtility.Tests
             LasPoint p3 = new () { x = dMinX + 5, y = dMinY + 55000, z = 5 };
 
             Envelope env = new(dMinX, dMaxX, dMinY, dMaxY);
-            string sGridName = "points";
-            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(sGridName, iGridSize, iGridSize, env);
+            VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.CreateGrid(iGridSize, iGridSize, env);
 
             Assert.True(grid.AddPoint(p1.x, p1.y, (float)p1.z, p1.classification, true));
             Assert.True(grid.AddPoint(p2.x, p2.y, (float)p2.z, p1.classification, true));
@@ -82,7 +81,7 @@ namespace LasUtility.Tests
 
             grid.SortAndTrim();
 
-            grid.Serialize(sTestOutputFoldername);
+            grid.Serialize(sOutputFilename);
 
             Assert.True(File.Exists(sOutputFilename));
             Assert.True(File.Exists(sInputFilename));
@@ -122,8 +121,6 @@ namespace LasUtility.Tests
             // Verify other points are sorted from high to low
             Assert.Equal(p3.z * 2, points[0].Z);
             Assert.Equal(p3.z / 2, points[2].Z);
-
-            Assert.Equal("points", grid.Name);
         }
     }
 }

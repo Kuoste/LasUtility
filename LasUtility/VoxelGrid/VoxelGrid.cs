@@ -27,28 +27,19 @@ namespace LasUtility.VoxelGrid
         [Key(3)]
         public bool _bIsSorted;
 
-        [Key(4)]
-        public string Name;
-
-        [Key(5)]
-        public string Version { get; set; }
-
-        public static VoxelGrid CreateGrid(string sName, string sVersion, IRasterBounds bounds, Bin[,] grid, float[,] dem)
+        public static VoxelGrid CreateGrid(IRasterBounds bounds, Bin[,] grid, float[,] dem)
         {
             return new()
             {
                 _bounds = bounds,
                 _grid = grid,
-                Dem = dem,
-                Name = sName,
-                Version = sVersion
+                Dem = dem
             };
         }
 
         /// <summary>
         /// Returns a new 3D bin grid with specified parameters.
         /// </summary>
-        /// <param name="sName"> Name of the grid </param>
         /// <param name="nRows"> Y-resolution: Bin height is (maxY - minY) / nRows </param>
         /// <param name="nCols"> X-resolution  Bin width is (maxX - minX / nCols </param>
         /// <param name="minX"> Minimun x coodinate. This is included in the area. </param>
@@ -56,7 +47,7 @@ namespace LasUtility.VoxelGrid
         /// <param name="maxX"> Maximum x coodinate. This is NOT included in the area. I.e. [minX, maxX[ </param>
         /// <param name="maxY"> Maximum y coodinate. This is NOT included in the area. I.e. [minY, maxY[ </param>
         /// <returns></returns>
-        public static VoxelGrid CreateGrid(string sName, int nRows, int nCols, Envelope extent)
+        public static VoxelGrid CreateGrid(int nRows, int nCols, Envelope extent)
         {
             Bin[,] grid = new Bin[nRows, nCols];
             float[,] dem = new float[nRows, nCols];
@@ -74,7 +65,6 @@ namespace LasUtility.VoxelGrid
             {
                 _bounds = new RasterBounds(nRows, nCols, extent),
                 Dem = dem,
-                Name = sName,
                 _grid = grid
             };
         }
@@ -129,14 +119,18 @@ namespace LasUtility.VoxelGrid
         }
 
         public void SetMissingHeightsFromTriangulation(SurfaceTriangulation tri,
-            double minX, double minY, double maxX, double maxY,
+            int iMinX, int iMinY, int iMaxX, int iMaxY,
             out int nMissingBefore, out int nMissingAfter)
         {
             nMissingBefore = 0;
             nMissingAfter = 0;
 
-            RcIndex rcMin = _bounds.ProjToCell(new Coordinate(minX, minY));
-            RcIndex rcMax = _bounds.ProjToCell(new Coordinate(maxX, maxY));
+            // Max values are not included in the raster
+            double dMaxX = iMaxX - RasterBounds.dEpsilon;
+            double dMaxY = iMaxY - RasterBounds.dEpsilon;
+
+            RcIndex rcMin = _bounds.ProjToCell(new Coordinate(iMinX, iMinY));
+            RcIndex rcMax = _bounds.ProjToCell(new Coordinate(dMaxX, dMaxY));
 
             if (rcMin == RcIndex.Empty || rcMax == RcIndex.Empty)
                 throw new Exception();
@@ -322,25 +316,18 @@ namespace LasUtility.VoxelGrid
             return null;
         }
 
-        public void Serialize(string sDirectory)
+        public void Serialize(string sFullFilename)
         {
-            string sFilename = Path.Combine(sDirectory, Name);
-
-            if (!string.IsNullOrWhiteSpace(Version))
-                sFilename += "_v" + Version;
-
-            sFilename += ".obj";
-
-            string sFilenameTemp = sFilename + ".tmp";
+            // Write to a temporary file first to avoid corrupting the file if the process is interrupted.
+            string sTempFilename = Path.ChangeExtension(sFullFilename, ".tmp");
 
             byte[] bytes = MessagePackSerializer.Serialize(this);
+            File.WriteAllBytes(sTempFilename, bytes);
 
-            File.WriteAllBytes(sFilenameTemp, bytes);
+            if (File.Exists(sFullFilename))
+                File.Delete(sFullFilename);
 
-            if (File.Exists(sFilename))
-                File.Delete(sFilename);
-
-            File.Move(sFilenameTemp, sFilename);
+            File.Move(sTempFilename, sFullFilename);
         }
 
         public static VoxelGrid Deserialize(string sFilename)
