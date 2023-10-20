@@ -186,7 +186,12 @@ namespace LasUtility.Common
 
         public void InitializeRaster(Envelope extent)
         {
-            Bounds = new RasterBounds((int)extent.Height, (int)extent.Width, extent);
+            InitializeRaster((int)extent.Height, (int)extent.Width, extent);
+        }
+
+        public void InitializeRaster(int iRowCount, int iColumnCount, Envelope extent)
+        {
+            Bounds = new RasterBounds(iRowCount, iColumnCount, extent);
             Raster = new byte[Bounds.RowCount][];
 
             for (int iRow = 0; iRow < Bounds.RowCount; iRow++)

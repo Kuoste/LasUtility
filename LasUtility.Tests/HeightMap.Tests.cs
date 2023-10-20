@@ -4,6 +4,7 @@ using LasUtility.ShapefileRasteriser;
 using System.Diagnostics;
 using LasUtility.Nls;
 using LasUtility.Common;
+using NetTopologySuite.Geometries;
 
 namespace LasUtility.Tests
 {
@@ -11,6 +12,80 @@ namespace LasUtility.Tests
     {
         readonly string _sTestFoldername = Path.Combine("..", "..", "..", "TestFiles", "HeightMap");
 
+
+        [Fact]
+        public void CreateRaster_NonMetric_ShouldWorkOnEdges()
+        {
+            var hm = new HeightMap();
+
+            int iRowCount = 70;
+            int iColumnCount = 160;
+
+            int iCoordinateMinX = 97;
+            int iCoordinateMaxX = 257;
+            int iCoordinateMinY = 667;
+            int iCoordinateMaxY = 757;
+
+            double dEps = 0.0001;
+
+            Envelope extent = new(iCoordinateMinX, iCoordinateMaxX, iCoordinateMinY, iCoordinateMaxY);
+
+            hm.InitializeRaster(iRowCount, iColumnCount, extent);
+
+            // Fill raster with column index
+            for (int iRow = 0; iRow < iRowCount; iRow++)
+            {
+                for (int iColumn = 0; iColumn < iColumnCount; iColumn++)
+                {
+                    hm.Raster[iRow][iColumn] = (byte)iColumn;
+                }
+            }
+
+            double d = hm.GetHeight(iCoordinateMaxX, iCoordinateMinY);
+
+            // Should return NaN since Max coordinates are outside of the raster
+            Assert.Equal(double.NaN, d);
+
+            d = hm.GetHeight(iCoordinateMaxX - dEps, iCoordinateMinY);
+
+            // Should return 159 since MaxX - dEps is just inside the raster
+            Assert.Equal(iColumnCount - 1, d);
+        }
+
+        [Fact]
+        public void CreateRaster_NonMetric_ShouldWorkOnMiddle()
+        {
+            var hm = new HeightMap();
+
+            int iRowCount = 2222;
+            int iColumnCount = 4488;
+
+            int iCoordinateMinX = 3752;
+            int iCoordinateMaxX = 3811;
+            int iCoordinateMinY = 144033;
+            int iCoordinateMaxY = 144045;
+
+            double dCellWidth = (iCoordinateMaxX - iCoordinateMinX) / (double)iColumnCount; 
+            double dCellHeight = (iCoordinateMaxY - iCoordinateMinY) / (double)iRowCount;
+
+            Envelope extent = new(iCoordinateMinX, iCoordinateMaxX, iCoordinateMinY, iCoordinateMaxY);
+            hm.InitializeRaster(iRowCount, iColumnCount, extent);
+
+            byte iTestValue = 123;
+
+            double dTestCoordinateY = 144036.334;
+            int iTestIndexRow = (int)((dTestCoordinateY - iCoordinateMinY) / dCellHeight);
+
+            double dTestCoordinateX = 3768.99;
+            int iTestIndexColumn = (int)((dTestCoordinateX - iCoordinateMinX) / dCellWidth);
+
+            hm.Raster[iTestIndexRow][iTestIndexColumn] = iTestValue;
+
+            double d = hm.GetHeight(dTestCoordinateX, dTestCoordinateY);
+
+            Assert.Equal(iTestValue, d);
+
+        }
 
         [Fact]
         public void ReadRaster_ShouldContainBuilding()
