@@ -37,21 +37,23 @@ namespace LasUtility.Common
 
         public void WriteAsAscii(string sFullFilename, int iMinX, int iMinY, int iMaxX, int iMaxY)
         {
-            using StreamWriter file = new(sFullFilename);
-
-            file.WriteLine("ncols         " + (iMaxX - iMinX));
-            file.WriteLine("nrows         " + (iMaxY - iMinY));
-            file.WriteLine("xllcorner     " + iMinX);
-            file.WriteLine("yllcorner     " + iMinY);
-            file.WriteLine("cellsize      " + Bounds.CellWidth);
-            file.WriteLine("NODATA_value  " + _iNoDataValue);
-
             // Max values are not included in the raster
             double dMaxX = iMaxX - RasterBounds.dEpsilon;
             double dMaxY = iMaxY - RasterBounds.dEpsilon;
 
             RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
             RcIndex end = Bounds.ProjToCell(new Coordinate(dMaxX, dMaxY));
+            int iColumnCount = end.Column - start.Column + 1;
+            int iRowCount = end.Row - start.Row + 1;
+
+            using StreamWriter file = new(sFullFilename);
+
+            file.WriteLine("ncols         " + iColumnCount);
+            file.WriteLine("nrows         " + iRowCount);
+            file.WriteLine("xllcorner     " + iMinX);
+            file.WriteLine("yllcorner     " + iMinY);
+            file.WriteLine("cellsize      " + Bounds.CellWidth);
+            file.WriteLine("NODATA_value  " + _iNoDataValue);
 
             for (int iRow = end.Row; iRow >= start.Row; --iRow)
             {
@@ -168,7 +170,7 @@ namespace LasUtility.Common
                         if (words.Length != nCols)
                         {
                             throw new Exception(String.Format("File {0} contains {1} colums on line {2}",
-                                fullFileName, words.Length, nRows - 1 - iRow));
+                                fullFileName, words.Length, nRows - iRow));
                         }
 
                         hm.Raster[--iRow] = Array.ConvertAll(words, byte.Parse);
