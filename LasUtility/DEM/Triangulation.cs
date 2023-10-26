@@ -57,6 +57,25 @@ namespace LasUtility.DEM
             }
         }
 
+        public int GetTriangleCount()
+        {
+            if (null == _voronoiMesh)
+                throw new InvalidOperationException("Triangulation is not created.");
+
+            return _voronoiMesh.Vertices.Count();
+        }
+
+        public void GetTriangle(int i, out Coordinate c1, out Coordinate c2, out Coordinate c3)
+        {
+            if (null == _voronoiMesh)
+                throw new InvalidOperationException("Triangulation is not created.");
+
+            var v = _voronoiMesh.Vertices.ElementAt(i);
+            c1 = v.Vertices[0].Coordinate;
+            c2 = v.Vertices[1].Coordinate;
+            c3 = v.Vertices[2].Coordinate;
+        }
+
         public void ExportToShp(string shpFilePath)
         {
             List<Feature> features = new();
