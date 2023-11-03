@@ -203,5 +203,33 @@ namespace LasUtility.Tests
             Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "File contents do not match");
         }
 
+        [Fact]
+        public void CreateRasterAndSaveAsCompressed()
+        {
+            string sTestName = "CreateRasterAndSaveAsCompressed";
+            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
+
+            // Delete contents of output folder
+            if (Directory.Exists(sTestOutputFoldername))
+                Directory.Delete(sTestOutputFoldername, true);
+
+            Directory.CreateDirectory(sTestOutputFoldername);
+
+            HeightMap hm = new();
+            hm.InitializeRaster(10, 10, new Envelope(0, 10, 0, 10));
+
+            hm.Raster[5][5] = 1;
+            hm.Raster[5][6] = 1;
+
+            string sOutputFilename = Path.Combine(sTestOutputFoldername, "test" + HeightMap.FileExtensionCompressed);
+
+            hm.WriteAsAscii(sOutputFilename);
+            Assert.True(File.Exists(sOutputFilename));
+
+            // Read back
+            var hmRead = HeightMap.CreateFromAscii(sOutputFilename);
+            Assert.Equal(1, hmRead.Raster[5][5]);
+            Assert.Equal(1, hmRead.Raster[5][6]);
+        }
     }
 }

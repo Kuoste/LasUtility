@@ -3,6 +3,7 @@ using Xunit;
 using LasUtility.ShapefileRasteriser;
 using System.Diagnostics;
 using LasUtility.Nls;
+using LasUtility.Common;
 #if OPEN_CV
 using OpenCvSharp;
 #endif
@@ -63,6 +64,42 @@ namespace LasUtility.Tests
 
         }
 
+        [Fact]
+        public void AddShapefileAndSaveAsCompressed()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
+            string sTestName = "AddShapefileAndSaveAsCompressed";
+            string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
+            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
+
+            // Delete contents of output folder
+            if (Directory.Exists(sTestOutputFoldername))
+                Directory.Delete(sTestOutputFoldername, true);
+
+            string sFileName = "buildings_roads" + HeightMap.FileExtensionCompressed;
+            string sOutputFilename = Path.Combine(sTestOutputFoldername, sFileName);
+
+            // Create folder if needed
+            if (!Directory.Exists(sTestOutputFoldername))
+                Directory.CreateDirectory(sTestOutputFoldername);
+
+            var rasteriser = new Rasteriser();
+            string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
+
+            rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.BuildingPolygonClassesToRasterValues);
+            rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.RoadLineClassesToRasterValues);
+
+            rasteriser.InitializeRaster(shpFullFilenames);
+
+            foreach (string filename in shpFullFilenames)
+                rasteriser.AddShapefile(filename);
+
+            rasteriser.WriteAsAscii(sOutputFilename);
+            Assert.True(File.Exists(sOutputFilename));
+            string sInputFilename = Path.Combine(sTestInputFoldername, sFileName);
+            Assert.True(File.Exists(sInputFilename), "Reference file does not exists in Input folder");
+            Assert.True(Utils.FileCompare(sInputFilename, sOutputFilename), "ASC file contents do not match");
+        }
     }
 }
