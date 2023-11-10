@@ -7,12 +7,20 @@ using NetTopologySuite.Features;
 using NetTopologySuite.IO.Esri;
 using System.Linq;
 using NetTopologySuite.IO.Esri.Shapefiles.Readers;
+using System.Threading;
 
 namespace LasUtility.ShapefileRasteriser
 {
     public class Rasteriser : HeightMap
     {
         private Dictionary<int, byte> _nlsClassesToRasterValues = new();
+
+        private CancellationToken _token;
+
+        public void SetCancellationToken(CancellationToken token)
+        {
+            _token = token;
+        }
 
         public void InitializeRaster(string[] filenames)
         {
@@ -54,6 +62,9 @@ namespace LasUtility.ShapefileRasteriser
 
             foreach (Feature feature in Shapefile.ReadAllFeatures(filename))
             {
+                if (null != _token && _token.IsCancellationRequested)
+                    return;
+
                 nTotal++;
 
                 int classification = (int)(long)feature.Attributes["LUOKKA"];
@@ -90,6 +101,9 @@ namespace LasUtility.ShapefileRasteriser
 
         private void SetValueIfInside(int iRowMin, int iRowMax, int jColMin, int jColMax, Geometry geometry, byte rasterValue)
         {
+            if (null != _token && _token.IsCancellationRequested)
+                return;
+
             Coordinate max = new(Bounds.CellTopRightToProj(iRowMax, jColMax));
             Coordinate min = new(Bounds.CellBottomLeftToProj(iRowMin, jColMin));
 

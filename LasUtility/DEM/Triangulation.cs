@@ -25,9 +25,16 @@ namespace LasUtility.DEM
             _grid = null;
         }
 
-        public void AddPoint(LasPoint p)
+        public bool AddPoint(LasPoint p)
         {
+            if (p.x < _grid.Bounds.MinX || p.x >= _grid.Bounds.MaxX ||
+                p.y < _grid.Bounds.MinY || p.y >= _grid.Bounds.MaxY)
+            {
+                return false;
+            }
+
             _vertices.Add(new Vertex(p.x, p.y, p.z, p.classification));
+            return true;
         }
 
         public void AddPoint(int iRow, int jCol, double z, byte classification)
