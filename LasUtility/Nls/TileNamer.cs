@@ -457,18 +457,21 @@ namespace LasUtility.Nls
             // Check if we reached the wanted recursion level
             if (iWantedSizeKmNorth >= iSizeNorth)
             {
-                // If wanted edge size is 12 km we probably want the names of the terrain database (maastotietokanta)
+                // If wanted edge size is 12 km we probably want the names of the topographic database (maastotietokanta)
                 // Add A or B to the name so that the area is 12x12 km2 instead of 24x12 km2 
                 if (iWantedSizeKmNorth == 12000 && iSizeNorth == 12000 && iSizeEast == 24000)
                 {
                     iSizeEast /= 2;
 
-                    if (((iEast - iOrigoEast) / iSizeEast) == 0)
+                    int iIndexEast = (iEast - iOrigoEast) / iSizeEast;
+
+                    if (iIndexEast == 0 || iIndexEast == 2)
                     {
                         sMapTileName += "L";
                     }
                     else
                     {
+                        // 1 or 3
                         sMapTileName += "R";
                     }
                 }
