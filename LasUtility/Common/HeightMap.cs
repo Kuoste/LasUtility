@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LasUtility.Common
 {
-    public class HeightMap : IHeightMap
+    public class HeightMap : IRaster
     {
         private const int _iNoDataValue = 0;
         public const string FileExtension = ".asc";
@@ -150,11 +150,6 @@ namespace LasUtility.Common
 #endif
         public HeightMap Crop(int iMinX, int iMinY, int iMaxX, int iMaxY)
         {
-            // Create a new heightmap with the new bounds
-            HeightMap hm = new();
-
-            hm.InitializeRaster(iMinX, iMinY, iMaxX, iMaxY);
-
             // Max values are not included in the raster
             double dMaxX = iMaxX - RasterBounds.dEpsilon;
             double dMaxY = iMaxY - RasterBounds.dEpsilon;
@@ -163,6 +158,12 @@ namespace LasUtility.Common
             RcIndex start = Bounds.ProjToCell(new Coordinate(iMinX, iMinY));
             RcIndex end = Bounds.ProjToCell(new Coordinate(dMaxX, dMaxY));
             int iColumnCount = end.Column - start.Column + 1;
+            int iRowCount = end.Row - start.Row + 1;
+
+            // Create a new heightmap with the new bounds and row/column counts
+            // Note that max values are included in the new bounds
+            HeightMap hm = new();
+            hm.InitializeRaster(iRowCount, iColumnCount, new Envelope(iMinX, iMaxX, iMinY, iMaxY));
 
             for (int iRow = start.Row; iRow <= end.Row; iRow++)
             {
@@ -294,9 +295,9 @@ namespace LasUtility.Common
             }
         }
 
-        public double GetHeight(double x, double y)
+        public double GetValue(Coordinate c)
         {
-            RcIndex rc = Bounds.ProjToCell(new Coordinate(x, y));
+            RcIndex rc = Bounds.ProjToCell(c);
 
             if (rc == RcIndex.Empty)
             {
@@ -308,6 +309,19 @@ namespace LasUtility.Common
                 return double.NaN;
 
             return Raster[rc.Row][rc.Column];
+        }
+
+        public double GetValue(int iRow, int jCol)
+        {
+            if (iRow < 0 || iRow > (Bounds.RowCount - 1) || jCol < 0 || jCol > (Bounds.ColumnCount - 1))
+            {
+                throw new ArgumentException("Cell indexes are out of range.");
+            }
+
+            if (Raster[iRow][jCol] == _iNoDataValue)
+                return double.NaN;
+
+            return Raster[iRow][jCol];
         }
     }
 }

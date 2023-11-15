@@ -41,12 +41,12 @@ namespace LasUtility.Tests
                 }
             }
 
-            double d = hm.GetHeight(iCoordinateMaxX, iCoordinateMinY);
+            double d = hm.GetValue(new Coordinate(iCoordinateMaxX, iCoordinateMinY));
 
             // Should return NaN since Max coordinates are outside of the raster
             Assert.Equal(double.NaN, d);
 
-            d = hm.GetHeight(iCoordinateMaxX - dEps, iCoordinateMinY);
+            d = hm.GetValue(new Coordinate(iCoordinateMaxX - dEps, iCoordinateMinY));
 
             // Should return 159 since MaxX - dEps is just inside the raster
             Assert.Equal(iColumnCount - 1, d);
@@ -81,7 +81,7 @@ namespace LasUtility.Tests
 
             hm.Raster[iTestIndexRow][iTestIndexColumn] = iTestValue;
 
-            double d = hm.GetHeight(dTestCoordinateX, dTestCoordinateY);
+            double d = hm.GetValue(new Coordinate(dTestCoordinateX, dTestCoordinateY));
 
             Assert.Equal(iTestValue, d);
 
@@ -97,7 +97,7 @@ namespace LasUtility.Tests
 
             var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
-            byte classification = (byte)hm.GetHeight(518550, 7044465);
+            byte classification = (byte)hm.GetValue(new Coordinate(518550, 7044465));
             byte inputClassification = 101;
 
             Assert.Equal(inputClassification, classification);
@@ -201,6 +201,21 @@ namespace LasUtility.Tests
             string sInputAscFilename = Path.Combine(sTestInputFoldername, "buildings_roads_smaller.asc");
             Assert.True(File.Exists(sInputAscFilename), "Reference file does not exists in Input folder");
             Assert.True(Utils.FileCompare(sInputAscFilename, sOutputAscFilename), "File contents do not match");
+        }
+
+        [Fact]
+        public void CreateRasterNonMetricAndCrop()
+        {
+            HeightMap hm = new();
+            hm.InitializeRaster(55, 66, new Envelope(1000, 1010, 500, 550));
+
+            RcIndex rc = hm.Bounds.ProjToCell(new Coordinate(1005, 505));
+
+            hm.Raster[rc.Row][rc.Column] = 100;
+
+            HeightMap hmSmaller = hm.Crop(1003, 501, 1008, 520);
+
+            Assert.Equal(100, hmSmaller.Raster[4][14]);
         }
 
         [Fact]

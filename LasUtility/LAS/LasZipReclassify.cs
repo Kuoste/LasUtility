@@ -1,5 +1,6 @@
 ﻿using LasUtility.Common;
 using laszip.net;
+using NetTopologySuite.Geometries;
 
 namespace LasUtility.LAS
 {
@@ -7,11 +8,11 @@ namespace LasUtility.LAS
     {
         private readonly string _sLasFullFilename;
         private readonly string _sOutputLasFileName;
-        private readonly IHeightMap _classGrid;
+        private readonly IRaster _classGrid;
 
         const int _iLasGroundClass = 2;
 
-        public LasZipReclassify(string lasFullFilename, string outputLasFileName, IHeightMap classGrid)
+        public LasZipReclassify(string lasFullFilename, string outputLasFileName, IRaster classGrid)
         {
             _sLasFullFilename = lasFullFilename;
             _sOutputLasFileName = outputLasFileName;
@@ -32,7 +33,7 @@ namespace LasUtility.LAS
             long nReclassified = 0;
             while ((p = reader.ReadPointAsLasZipPoint(ref scaledCoords)) != null)
             {
-                double classValue = _classGrid.GetHeight(scaledCoords[0], scaledCoords[1]);
+                double classValue = _classGrid.GetValue(new Coordinate(scaledCoords[0], scaledCoords[1]));
 
                 if (!double.IsNaN(classValue))
                 {

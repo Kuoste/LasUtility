@@ -11,11 +11,13 @@ using System.Linq;
 
 namespace LasUtility.DEM
 {
-    public class SurfaceTriangulation : IHeightMap
+    public class SurfaceTriangulation : IRaster
     {
         readonly List<Vertex> _vertices = new ();
         TriangleIndexGrid _grid;
         VoronoiMesh<Vertex, Cell<Vertex>, VoronoiEdge<Vertex, Cell<Vertex>>> _voronoiMesh;
+
+        readonly bool _bUseIndexingOnTriangles;
 
         public void Clear()
         {
@@ -43,8 +45,9 @@ namespace LasUtility.DEM
             _vertices.Add(new Vertex(c.X, c.Y, z, classification));
         }
 
-        public SurfaceTriangulation(int nRows, int nCols, double minX, double minY, double maxX, double maxY)
+        public SurfaceTriangulation(int nRows, int nCols, double minX, double minY, double maxX, double maxY, bool bUseIndexingOnTriangles = true)
         {
+            _bUseIndexingOnTriangles = bUseIndexingOnTriangles;
             _grid = new TriangleIndexGrid(nRows, nCols, minX, minY, maxX, maxY);
         }
 
@@ -53,9 +56,15 @@ namespace LasUtility.DEM
             if (!_vertices.Any())
                 throw new InvalidOperationException("Add triangulation points before creating triangulation.");
 
-            _grid.ResetGrid();
-
             _voronoiMesh = VoronoiMesh.Create<Vertex, Cell<Vertex>>(_vertices);
+
+            if (true == _bUseIndexingOnTriangles)
+                CreateGridIndexing();
+        }
+
+        private void CreateGridIndexing()
+        {
+            _grid.ResetGrid();
 
             for (int i = 0; i < _voronoiMesh.Vertices.Count(); i++)
             {
@@ -105,6 +114,9 @@ namespace LasUtility.DEM
         {
             double ret = double.NaN;
             classification = 0;
+
+            if (false == _bUseIndexingOnTriangles)
+                throw new InvalidOperationException("Indexing on triangles is not enabled.");
 
             if (_grid == null)
                 throw new InvalidOperationException("Triangulation is not created.");
@@ -207,11 +219,14 @@ namespace LasUtility.DEM
             return GetValue(x, y, out classification);
         }
 
-        public double GetHeight(double x, double y)
+        public double GetValue(Coordinate c)
         {
-            return GetValue(x, y, out _);
+            return GetValue(c.X, c.Y, out _);
         }
 
-
+        public double GetValue(int iRow, int jCol)
+        {
+            return GetValue(_grid.Bounds.CellBottomLeftToProj(iRow, jCol));
+        }
     }
 }

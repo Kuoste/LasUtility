@@ -9,7 +9,7 @@ using MessagePack;
 namespace LasUtility.VoxelGrid
 {
     [MessagePackObject]
-    public class VoxelGrid : IHeightMap
+    public class VoxelGrid : IRaster
     {
         [Key(0)]
         public IRasterBounds _bounds;
@@ -337,9 +337,9 @@ namespace LasUtility.VoxelGrid
             return MessagePackSerializer.Deserialize<VoxelGrid>(bytes);
         }
 
-        public double GetHeight(double x, double y)
+        public double GetValue(Coordinate c)
         {
-            if (GetGridIndexes(x, y, out int iRow, out int jCol))
+            if (GetGridIndexes(c.X, c.Y, out int iRow, out int jCol))
             {
                 return Dem[iRow, jCol];
             }
@@ -347,7 +347,7 @@ namespace LasUtility.VoxelGrid
             throw new Exception("Coordinate out of bounds");
         }
 
-        public float GetGroundHeight(int iRow, int jCol)
+        public double GetValue(int iRow, int jCol)
         {
             if (jCol >= 0 && jCol < _bounds.ColumnCount && iRow >= 0 && iRow < _bounds.RowCount)
             {

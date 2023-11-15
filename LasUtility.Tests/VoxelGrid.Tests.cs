@@ -39,13 +39,13 @@ namespace LasUtility.Tests
             Assert.True(grid.AddPoint(p3.x, p3.y, (float)p3.z, p1.classification, true));
 
             grid.GetGridIndexes(p1.x, p1.y, out int iRow, out int jCol);
-            Assert.Equal(p1.z, grid.GetGroundHeight(iRow, jCol));
+            Assert.Equal(p1.z, grid.GetValue(iRow, jCol));
 
             grid.GetGridIndexes(p2.x, p2.y, out iRow, out jCol);
-            Assert.Equal(p2.z, grid.GetGroundHeight(iRow, jCol));
+            Assert.Equal(p2.z, grid.GetValue(iRow, jCol));
 
             grid.GetGridIndexes(p3.x, p3.y, out iRow, out jCol);
-            Assert.Equal(p3.z, grid.GetGroundHeight(iRow, jCol));
+            Assert.Equal(p3.z, grid.GetValue(iRow, jCol));
         }
 
         [Fact]
@@ -110,8 +110,8 @@ namespace LasUtility.Tests
             VoxelGrid.VoxelGrid grid = VoxelGrid.VoxelGrid.Deserialize(sInputFilename);
 
             // Verify ground points
-            Assert.Equal(p1.z, grid.GetHeight(p1.x, p1.y));
-            Assert.Equal(p2.z, grid.GetHeight(p2.x, p2.y));
+            Assert.Equal(p1.z, grid.GetValue(new Coordinate(p1.x, p1.y)));
+            Assert.Equal(p2.z, grid.GetValue(new Coordinate(p2.x, p2.y)));
 
             // Verify count of other points
             grid.GetGridIndexes(p3.x, p3.y, out int iRow, out int jCol);
