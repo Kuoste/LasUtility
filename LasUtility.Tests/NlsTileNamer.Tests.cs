@@ -46,10 +46,17 @@ namespace LasUtility.Tests
         }
 
         [Fact]
-        public void Encode_12kmx12km()
+        public void Encode_12kmx12km_ShouldBeRight()
         {
             string name = TileNamer.Encode(426502, 7214414, 12000);
             Assert.Equal("R4412R", name);
+        }
+
+        [Fact]
+        public void Encode_12kmx12km_ShouldBeLeft()
+        {
+            string name = TileNamer.Encode(380000, 6666000, 12000);
+            Assert.Equal("L4133L", name);
         }
     }
 }
