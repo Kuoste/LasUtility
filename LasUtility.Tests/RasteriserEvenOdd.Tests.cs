@@ -27,6 +27,7 @@ namespace LasUtility.Tests
             if (Directory.Exists(sTestOutputFoldername))
                 Directory.Delete(sTestOutputFoldername, true);
 
+            //string sFilename = "terraintype" + ByteRaster.FileExtension
             string sFilename = "terraintype" + ByteRaster.FileExtensionCompressed;
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, sFilename);
 
@@ -43,12 +44,7 @@ namespace LasUtility.Tests
             rasteriser.InitializeRaster(shpFullFilenames);
 
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.WaterPolygonClassesToRasterValues);
-
-            //foreach (string filename in shpFullFilenames)
-            //    rasteriser.RasteriseShapefile(filename);
-
-            //rasteriser.RemoveRasterizedClassesWithRasterValues(TopographicDb.WaterPolygonClassesToRasterValues);
-
+            rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.WaterLineClassesToRasterValues);
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.SwampPolygonClassesToRasterValues);
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.FieldPolygonClassesToRasterValues);
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.RockPolygonClassesToRasterValues);

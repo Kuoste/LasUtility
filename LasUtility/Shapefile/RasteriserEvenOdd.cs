@@ -19,8 +19,8 @@ namespace LasUtility.ShapefileRasteriser
 
         private CancellationToken _token;
 
-        private const int MAX_POLY_CORNERS = 10000;
-        private readonly int[] _nodeX = new int[MAX_POLY_CORNERS];
+        private const int iMaxNodesPerRow = 100;
+        private readonly int[] _nodeX = new int[iMaxNodesPerRow];
 
         /// <summary>
         /// Use temporary raster when rasterising cannot be done in-place, e.g. polygons with holes.
@@ -86,14 +86,7 @@ namespace LasUtility.ShapefileRasteriser
 
                 byte rasterValue = _nlsClassesToRasterValues[classification];
 
-                MultiPolygon multiPolygon = (MultiPolygon)feature.Geometry;
-
-                if (multiPolygon.NumGeometries > 1)
-                    throw new Exception($"RasteriserEvenOdd: Only multipolygons with single geometry are supported.");
-
-                Polygon p = (Polygon)multiPolygon.GetGeometryN(0);
-
-                Envelope envelope = p.ExteriorRing.EnvelopeInternal;
+                Envelope envelope = feature.Geometry.EnvelopeInternal;
 
                 // No need to substract epsilon from the max values since the shapefile coordinates
                 // do not contain the upper limits.
@@ -105,46 +98,167 @@ namespace LasUtility.ShapefileRasteriser
                 if (iMin == RcIndex.Empty || iMax == RcIndex.Empty)
                     continue;
 
-                // If polygon has holes, use temporary raster so that previous values inside holes (=interiorRings) are not lost
-                bool bUseSeparateRaster = p.NumInteriorRings > 0;
-
-                ByteRaster destRaster = this;
-
-                if (true == bUseSeparateRaster)
+                if (feature.Geometry is MultiPolygon)
                 {
-                    if (null == _tempRaster)
+                    MultiPolygon multiPolygon = (MultiPolygon)feature.Geometry;
+
+                    for (int i = 0; i < multiPolygon.NumGeometries; i++)
                     {
-                        _tempRaster = new ByteRaster();
-                        _tempRaster.InitializeRaster(Bounds.RowCount, Bounds.ColumnCount,
-                            new Envelope(Bounds.MinX, Bounds.MaxX, Bounds.MinY, Bounds.MaxY));
+                        Polygon p = (Polygon)multiPolygon.GetGeometryN(0);
+                        ProcessPolygon(rasterValue, iMin, iMax, p);
                     }
-
-                    destRaster = _tempRaster;
                 }
-
-                FillPolygon(destRaster, rasterValue, p.ExteriorRing);
-
-                // Fill holes back to the background value
-                for (int i = 0; i < p.NumInteriorRings; i++)
+                else if (feature.Geometry is MultiLineString)
                 {
-                    FillPolygon(destRaster, NoDataValue, p.GetInteriorRingN(i));
-                }
+                    MultiLineString multiLineString = (MultiLineString)feature.Geometry;
 
-                if (true == bUseSeparateRaster)
-                {
-                    // Copy values from temporary raster and reset it
-
-                    for (int iRow = iMin.Row; iRow < iMax.Row; iRow++)
+                    for (int i = 0; i < multiLineString.NumGeometries; i++)
                     {
-                        for (int jCol = iMin.Column; jCol < iMax.Column; jCol++)
-                        {
-                            byte value = _tempRaster.Raster[iRow][jCol];
+                        LineString l = (LineString)multiLineString.GetGeometryN(0);
 
-                            if (value != NoDataValue)
-                            {
-                                Raster[iRow][jCol] = value;
-                                _tempRaster.Raster[iRow][jCol] = NoDataValue;
-                            }
+                        ProcessLine(rasterValue, l);
+                    }
+                }
+                else
+                {
+                    throw new Exception("Unsupported geometry");
+                }
+            }
+        }
+
+        private void ProcessLine(byte rasterValue, LineString l)
+        {
+            CoordinateSequence coordinateSequence = l.CoordinateSequence;
+
+            for (int i = 1; i < coordinateSequence.Count; i++)
+            {
+                Coordinate c0 = coordinateSequence.GetCoordinate(i - 1);
+                Coordinate c1 = coordinateSequence.GetCoordinate(i);
+
+                RcIndex iMin = Bounds.ProjToCell(c0);
+                RcIndex iMax = Bounds.ProjToCell(c1);
+
+                foreach ((int x, int y) c in Line(iMin.Column, iMin.Row, iMax.Column, iMax.Row))
+                {
+                    Raster[c.y][c.x] = rasterValue;
+                }
+            }
+        }
+
+        public static IEnumerable<(int x, int y)> Line(int ax, int ay, int bx, int by)
+        {
+            // https://gist.github.com/Pyr3z/46884d67641094d6cf353358566db566
+
+            /*!****************************************************************************
+             * \file      RasterLineTo.cs
+             * \author    Levi Perez (levianperez\@gmail.com)
+             * \author    Jack Elton Bresenham (IBM, 1962)
+             * 
+             * \copyright None. I didn't invent this algorithm, and neither did you.
+             *            If I had to choose a license, it would be <https://unlicense.org>.
+             *****************************************************************************/
+
+            // declare all locals at the top so it's obvious how big the footprint is
+            int dx, dy, xinc, yinc, side, i, error;
+
+            // starting cell is always returned
+            yield return (ax, ay);
+
+            xinc = (bx < ax) ? -1 : 1;
+            yinc = (by < ay) ? -1 : 1;
+            dx = xinc * (bx - ax);
+            dy = yinc * (by - ay);
+
+            if (dx == dy) // Handle perfect diagonals
+            {
+                // I include this "optimization" for more aesthetic reasons, actually.
+                // While Bresenham's Line can handle perfect diagonals just fine, it adds
+                // additional cells to the line that make it not a perfect diagonal
+                // anymore. So, while this branch is ~twice as fast as the next branch,
+                // the real reason it is here is for style.
+
+                // Also, there *is* the reason of performance. If used for cell-based
+                // raycasts, for example, then perfect diagonals will check half as many
+                // cells.
+
+                while (dx-- > 0)
+                {
+                    ax += xinc;
+                    ay += yinc;
+                    yield return (ax, ay);
+                }
+
+                yield break;
+            }
+
+            // Handle all other lines
+
+            side = -1 * ((dx == 0 ? yinc : xinc) - 1);
+
+            i = dx + dy;
+            error = dx - dy;
+
+            dx *= 2;
+            dy *= 2;
+
+            while (i-- > 0)
+            {
+                if (error > 0 || error == side)
+                {
+                    ax += xinc;
+                    error -= dy;
+                }
+                else
+                {
+                    ay += yinc;
+                    error += dx;
+                }
+
+                yield return (ax, ay);
+            }
+        }
+
+        private void ProcessPolygon(byte rasterValue, RcIndex iMin, RcIndex iMax, Polygon p)
+        {
+            // If polygon has holes, use temporary raster so that previous values inside holes (=interiorRings) are not lost
+            bool bUseSeparateRaster = p.NumInteriorRings > 0;
+
+            ByteRaster destRaster = this;
+
+            if (true == bUseSeparateRaster)
+            {
+                if (null == _tempRaster)
+                {
+                    _tempRaster = new ByteRaster();
+                    _tempRaster.InitializeRaster(Bounds.RowCount, Bounds.ColumnCount,
+                        new Envelope(Bounds.MinX, Bounds.MaxX, Bounds.MinY, Bounds.MaxY));
+                }
+
+                destRaster = _tempRaster;
+            }
+
+            FillPolygon(destRaster, rasterValue, p.ExteriorRing);
+
+            // Fill holes back to the background value
+            for (int i = 0; i < p.NumInteriorRings; i++)
+            {
+                FillPolygon(destRaster, NoDataValue, p.GetInteriorRingN(i));
+            }
+
+            if (true == bUseSeparateRaster)
+            {
+                // Copy values from temporary raster and reset it
+
+                for (int iRow = iMin.Row; iRow < iMax.Row; iRow++)
+                {
+                    for (int jCol = iMin.Column; jCol < iMax.Column; jCol++)
+                    {
+                        byte value = _tempRaster.Raster[iRow][jCol];
+
+                        if (value != NoDataValue)
+                        {
+                            Raster[iRow][jCol] = value;
+                            _tempRaster.Raster[iRow][jCol] = NoDataValue;
                         }
                     }
                 }
@@ -164,9 +278,6 @@ namespace LasUtility.ShapefileRasteriser
             int IMAGE_RIGHT = iMax.Column;
             int polyCorners = line.NumPoints;
 
-            if (polyCorners > MAX_POLY_CORNERS)
-                throw new Exception($"RasteriserEvenOdd: Cannot process polygons with more than {MAX_POLY_CORNERS} corners.");
-
             double[] polyX = new double[polyCorners];
             double[] polyY = new double[polyCorners];
 
@@ -181,6 +292,8 @@ namespace LasUtility.ShapefileRasteriser
             FillPolygonInt(dest, rasterValue, IMAGE_TOP, IMAGE_BOT, IMAGE_LEFT, IMAGE_RIGHT, polyCorners, polyX, polyY);
         }
 
+  
+
         private void FillPolygonInt(ByteRaster dest, byte rasterValue, int IMAGE_TOP, int IMAGE_BOT, int IMAGE_LEFT, int IMAGE_RIGHT, int polyCorners, double[] polyX, double[] polyY)
         {
             // Originally from http://alienryderflex.com/polygon_fill/
@@ -194,12 +307,14 @@ namespace LasUtility.ShapefileRasteriser
                 //  Build a list of nodes.
                 nodes = 0; j = polyCorners - 1;
 
+                if (nodes > iMaxNodesPerRow)
+                    throw new Exception($"RasteriserEvenOdd: Cannot process polygons with more than {iMaxNodesPerRow} edges per row.");
+
                 for (i = 0; i < polyCorners; i++)
                 {
                     if (polyY[i] < pixelY && polyY[j] >= pixelY || polyY[j] < pixelY && polyY[i] >= pixelY)
                     {
-                        _nodeX[nodes++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i])
-                        * (polyX[j] - polyX[i]));
+                        _nodeX[nodes++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i]) * (polyX[j] - polyX[i]));
                     }
 
                     j = i;
