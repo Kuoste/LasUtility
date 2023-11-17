@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace LasUtility.ShapefileRasteriser
 {
-    public class RasteriserRecursive : HeightMap, IShapefileRasteriser
+    public class RasteriserRecursive : ByteRaster, IShapefileRasteriser
     {
         private Dictionary<int, byte> _nlsClassesToRasterValues = new();
 

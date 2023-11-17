@@ -77,7 +77,7 @@ namespace LasUtility.Tests
             if (Directory.Exists(sTestOutputFoldername))
                 Directory.Delete(sTestOutputFoldername, true);
 
-            string sFileName = "buildings_roads" + HeightMap.FileExtensionCompressed;
+            string sFileName = "buildings_roads" + ByteRaster.FileExtensionCompressed;
             string sOutputFilename = Path.Combine(sTestOutputFoldername, sFileName);
 
             // Create folder if needed

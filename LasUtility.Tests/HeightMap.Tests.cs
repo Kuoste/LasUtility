@@ -16,7 +16,7 @@ namespace LasUtility.Tests
         [Fact]
         public void CreateRaster_NonMetric_ShouldWorkOnEdges()
         {
-            var hm = new HeightMap();
+            var hm = new ByteRaster();
 
             int iRowCount = 70;
             int iColumnCount = 160;
@@ -55,7 +55,7 @@ namespace LasUtility.Tests
         [Fact]
         public void CreateRaster_NonMetric_ShouldWorkOnMiddle()
         {
-            var hm = new HeightMap();
+            var hm = new ByteRaster();
 
             int iRowCount = 2222;
             int iColumnCount = 4488;
@@ -95,7 +95,7 @@ namespace LasUtility.Tests
             string sTestName = "ReadRaster_ShouldContainBuilding";
             string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
 
-            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = ByteRaster.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
             byte classification = (byte)hm.GetValue(new Coordinate(518550, 7044465));
             byte inputClassification = 101;
@@ -120,7 +120,7 @@ namespace LasUtility.Tests
 
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads.asc");
 
-            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = ByteRaster.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
             hm.WriteAsAscii(sOutputAscFilename);
 
@@ -149,7 +149,7 @@ namespace LasUtility.Tests
 
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads_smaller.asc");
 
-            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = ByteRaster.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
             int iCropInMeters = 200;
             int iMinX = (int)hm.Bounds.MinX + iCropInMeters;
@@ -184,7 +184,7 @@ namespace LasUtility.Tests
 
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, "buildings_roads_smaller.asc");
 
-            var hm = HeightMap.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
+            var hm = ByteRaster.CreateFromAscii(Path.Combine(sTestInputFoldername, "buildings_roads.asc"));
 
             int iCropInMeters = 200;
             int iMinX = (int)hm.Bounds.MinX + iCropInMeters;
@@ -206,14 +206,14 @@ namespace LasUtility.Tests
         [Fact]
         public void CreateRasterNonMetricAndCrop()
         {
-            HeightMap hm = new();
+            ByteRaster hm = new();
             hm.InitializeRaster(55, 66, new Envelope(1000, 1010, 500, 550));
 
             RcIndex rc = hm.Bounds.ProjToCell(new Coordinate(1005, 505));
 
             hm.Raster[rc.Row][rc.Column] = 100;
 
-            HeightMap hmSmaller = hm.Crop(1003, 501, 1008, 520);
+            ByteRaster hmSmaller = hm.Crop(1003, 501, 1008, 520);
 
             Assert.Equal(100, hmSmaller.Raster[4][14]);
         }
@@ -230,19 +230,19 @@ namespace LasUtility.Tests
 
             Directory.CreateDirectory(sTestOutputFoldername);
 
-            HeightMap hm = new();
+            ByteRaster hm = new();
             hm.InitializeRaster(10, 10, new Envelope(0, 10, 0, 10));
 
             hm.Raster[5][5] = 1;
             hm.Raster[5][6] = 1;
 
-            string sOutputFilename = Path.Combine(sTestOutputFoldername, "test" + HeightMap.FileExtensionCompressed);
+            string sOutputFilename = Path.Combine(sTestOutputFoldername, "test" + ByteRaster.FileExtensionCompressed);
 
             hm.WriteAsAscii(sOutputFilename);
             Assert.True(File.Exists(sOutputFilename));
 
             // Read back
-            var hmRead = HeightMap.CreateFromAscii(sOutputFilename);
+            var hmRead = ByteRaster.CreateFromAscii(sOutputFilename);
             Assert.Equal(1, hmRead.Raster[5][5]);
             Assert.Equal(1, hmRead.Raster[5][6]);
         }

@@ -27,7 +27,7 @@ namespace LasUtility.Tests
             if (Directory.Exists(sTestOutputFoldername))
                 Directory.Delete(sTestOutputFoldername, true);
 
-            string sFilename = "terraintype" + HeightMap.FileExtensionCompressed;
+            string sFilename = "terraintype" + ByteRaster.FileExtensionCompressed;
             string sOutputAscFilename = Path.Combine(sTestOutputFoldername, sFilename);
 
             // Create folders if they don't exist

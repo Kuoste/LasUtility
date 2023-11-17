@@ -13,7 +13,7 @@ using System.Diagnostics;
 
 namespace LasUtility.ShapefileRasteriser
 {
-    public class RasteriserEvenOdd: HeightMap, IShapefileRasteriser
+    public class RasteriserEvenOdd: ByteRaster, IShapefileRasteriser
     {
         private Dictionary<int, byte> _nlsClassesToRasterValues = new();
 
@@ -25,7 +25,7 @@ namespace LasUtility.ShapefileRasteriser
         /// <summary>
         /// Use temporary raster when rasterising cannot be done in-place, e.g. polygons with holes.
         /// </summary>
-        private HeightMap _tempRaster;
+        private ByteRaster _tempRaster;
 
         public void SetCancellationToken(CancellationToken token)
         {
@@ -108,13 +108,13 @@ namespace LasUtility.ShapefileRasteriser
                 // If polygon has holes, use temporary raster so that previous values inside holes (=interiorRings) are not lost
                 bool bUseSeparateRaster = p.NumInteriorRings > 0;
 
-                HeightMap destRaster = this;
+                ByteRaster destRaster = this;
 
                 if (true == bUseSeparateRaster)
                 {
                     if (null == _tempRaster)
                     {
-                        _tempRaster = new HeightMap();
+                        _tempRaster = new ByteRaster();
                         _tempRaster.InitializeRaster(Bounds.RowCount, Bounds.ColumnCount,
                             new Envelope(Bounds.MinX, Bounds.MaxX, Bounds.MinY, Bounds.MaxY));
                     }
@@ -151,7 +151,7 @@ namespace LasUtility.ShapefileRasteriser
             }
         }
 
-        private void FillPolygon(HeightMap dest, byte rasterValue, LineString line)
+        private void FillPolygon(ByteRaster dest, byte rasterValue, LineString line)
         {
             Envelope envelope = line.EnvelopeInternal;
 
@@ -181,7 +181,7 @@ namespace LasUtility.ShapefileRasteriser
             FillPolygonInt(dest, rasterValue, IMAGE_TOP, IMAGE_BOT, IMAGE_LEFT, IMAGE_RIGHT, polyCorners, polyX, polyY);
         }
 
-        private void FillPolygonInt(HeightMap dest, byte rasterValue, int IMAGE_TOP, int IMAGE_BOT, int IMAGE_LEFT, int IMAGE_RIGHT, int polyCorners, double[] polyX, double[] polyY)
+        private void FillPolygonInt(ByteRaster dest, byte rasterValue, int IMAGE_TOP, int IMAGE_BOT, int IMAGE_LEFT, int IMAGE_RIGHT, int polyCorners, double[] polyX, double[] polyY)
         {
             // Originally from http://alienryderflex.com/polygon_fill/
             //  public-domain code by Darel Rex Finley, 2007
