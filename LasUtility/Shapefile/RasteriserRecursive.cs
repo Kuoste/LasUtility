@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace LasUtility.ShapefileRasteriser
 {
-    public class Rasteriser : HeightMap
+    public class RasteriserRecursive : HeightMap, IShapefileRasteriser
     {
         private Dictionary<int, byte> _nlsClassesToRasterValues = new();
 
@@ -36,7 +36,6 @@ namespace LasUtility.ShapefileRasteriser
                     extent.ExpandToInclude(reader.BoundingBox);
             }
 
-
             // Expand to integer values to get cell size 1.0000000 meters 
             extent = new Envelope(
                 Math.Floor(extent.MinX),
@@ -54,8 +53,16 @@ namespace LasUtility.ShapefileRasteriser
                 .ToDictionary(x => x.Key, x => x.Value);
         }
 
+        public void RemoveRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
+        {
+            foreach (var item in classesToRasterValues)
+            {
+                _nlsClassesToRasterValues.Remove(item.Key);
+            }
+        }
 
-        public void AddShapefile(string filename)
+
+        public void RasteriseShapefile(string filename)
         {
             int nAdded = 0;
             int nTotal = 0;

@@ -7,7 +7,7 @@ namespace LasUtility.Common
 {
     public class HeightMap : IRaster
     {
-        private const int _iNoDataValue = 0;
+        public const int NoDataValue = 0;
         public const string FileExtension = ".asc";
         public const string FileExtensionCompressed = ".asp";
 
@@ -32,7 +32,7 @@ namespace LasUtility.Common
             file.WriteLine("xllcorner     " + Bounds.MinX);
             file.WriteLine("yllcorner     " + Bounds.MinY);
             file.WriteLine("cellsize      " + Bounds.CellWidth);
-            file.WriteLine("NODATA_value  " + _iNoDataValue);
+            file.WriteLine("NODATA_value  " + NoDataValue);
 
             for (int iRow = Bounds.RowCount - 1; iRow >= 0; --iRow)
             {
@@ -67,7 +67,7 @@ namespace LasUtility.Common
             file.WriteLine("xllcorner     " + iMinX);
             file.WriteLine("yllcorner     " + iMinY);
             file.WriteLine("cellsize      " + Bounds.CellWidth);
-            file.WriteLine("NODATA_value  " + _iNoDataValue);
+            file.WriteLine("NODATA_value  " + NoDataValue);
 
             for (int iRow = end.Row; iRow >= start.Row; --iRow)
             {
@@ -291,7 +291,7 @@ namespace LasUtility.Common
             {
                 Raster[iRow] = new byte[Bounds.ColumnCount];
                 for (int jCol = 0; jCol < Bounds.ColumnCount; jCol++)
-                    Raster[iRow][jCol] = _iNoDataValue;
+                    Raster[iRow][jCol] = NoDataValue;
             }
         }
 
@@ -305,7 +305,7 @@ namespace LasUtility.Common
                 return double.NaN;
             }
 
-            if (Raster[rc.Row][rc.Column] == _iNoDataValue)
+            if (Raster[rc.Row][rc.Column] == NoDataValue)
                 return double.NaN;
 
             return Raster[rc.Row][rc.Column];
@@ -318,7 +318,7 @@ namespace LasUtility.Common
                 throw new ArgumentException("Cell indexes are out of range.");
             }
 
-            if (Raster[iRow][jCol] == _iNoDataValue)
+            if (Raster[iRow][jCol] == NoDataValue)
                 return double.NaN;
 
             return Raster[iRow][jCol];
