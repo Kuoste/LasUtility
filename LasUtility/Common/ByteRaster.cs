@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LasUtility.Common
 {
-    public class HeightMap : IRaster
+    public class ByteRaster : IRaster
     {
         public const int NoDataValue = 0;
         public const string FileExtension = ".asc";
@@ -148,7 +148,7 @@ namespace LasUtility.Common
             shpPic.SaveImage(fullFileName);
         }
 #endif
-        public HeightMap Crop(int iMinX, int iMinY, int iMaxX, int iMaxY)
+        public ByteRaster Crop(int iMinX, int iMinY, int iMaxX, int iMaxY)
         {
             // Max values are not included in the raster
             double dMaxX = iMaxX - RasterBounds.dEpsilon;
@@ -162,7 +162,7 @@ namespace LasUtility.Common
 
             // Create a new heightmap with the new bounds and row/column counts
             // Note that max values are included in the new bounds
-            HeightMap hm = new();
+            ByteRaster hm = new();
             hm.InitializeRaster(iRowCount, iColumnCount, new Envelope(iMinX, iMaxX, iMinY, iMaxY));
 
             for (int iRow = start.Row; iRow <= end.Row; iRow++)
@@ -175,9 +175,9 @@ namespace LasUtility.Common
         }
 
 
-        public static HeightMap CreateFromAscii(string sFullFilename)
+        public static ByteRaster CreateFromAscii(string sFullFilename)
         {
-            HeightMap hm = new();
+            ByteRaster hm = new();
 
             char[] delimiters = new char[] { ' ', '\t' };
 
