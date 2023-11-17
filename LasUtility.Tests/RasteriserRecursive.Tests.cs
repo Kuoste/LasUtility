@@ -10,9 +10,9 @@ using OpenCvSharp;
 
 namespace LasUtility.Tests
 {
-    public class RasteriserTests
+    public class RasteriserRecursiveTests
     {
-        readonly string _sTestFoldername = Path.Combine("..", "..", "..", "TestFiles", "Rasteriser");
+        readonly string _sTestFoldername = Path.Combine("..", "..", "..", "TestFiles", "RasteriserRecursive");
 
         [Fact]
         public void AddShapefileAndSave()
@@ -37,7 +37,7 @@ namespace LasUtility.Tests
             if (!Directory.Exists(sTestOutputFoldername))
                 Directory.CreateDirectory(sTestOutputFoldername);
 
-            var rasteriser = new Rasteriser();
+            var rasteriser = new RasteriserRecursive();
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
 
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.BuildingPolygonClassesToRasterValues);
@@ -46,7 +46,7 @@ namespace LasUtility.Tests
             rasteriser.InitializeRaster(shpFullFilenames);
 
             foreach (string filename in shpFullFilenames)
-                rasteriser.AddShapefile(filename);
+                rasteriser.RasteriseShapefile(filename);
 
             rasteriser.WriteAsAscii(sOutputAscFilename);
             Assert.True(File.Exists(sOutputAscFilename));
@@ -84,7 +84,7 @@ namespace LasUtility.Tests
             if (!Directory.Exists(sTestOutputFoldername))
                 Directory.CreateDirectory(sTestOutputFoldername);
 
-            var rasteriser = new Rasteriser();
+            RasteriserRecursive rasteriser = new RasteriserRecursive();
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
 
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.BuildingPolygonClassesToRasterValues);
@@ -93,7 +93,7 @@ namespace LasUtility.Tests
             rasteriser.InitializeRaster(shpFullFilenames);
 
             foreach (string filename in shpFullFilenames)
-                rasteriser.AddShapefile(filename);
+                rasteriser.RasteriseShapefile(filename);
 
             rasteriser.WriteAsAscii(sOutputFilename);
             Assert.True(File.Exists(sOutputFilename));
