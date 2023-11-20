@@ -13,12 +13,8 @@ using System.Diagnostics;
 
 namespace LasUtility.ShapefileRasteriser
 {
-    public class RasteriserEvenOdd: ByteRaster, IShapefileRasteriser
+    public class RasteriserEvenOdd: Rasteriser, IShapefileRasteriser
     {
-        private Dictionary<int, byte> _nlsClassesToRasterValues = new();
-
-        private CancellationToken _token;
-
         private const int iMaxNodesPerRow = 100;
         private readonly int[] _nodeX = new int[iMaxNodesPerRow];
 
@@ -26,50 +22,6 @@ namespace LasUtility.ShapefileRasteriser
         /// Use temporary raster when rasterising cannot be done in-place, e.g. polygons with holes.
         /// </summary>
         private ByteRaster _tempRaster;
-
-        public void SetCancellationToken(CancellationToken token)
-        {
-            _token = token;
-        }
-
-        public void InitializeRaster(string[] filenames)
-        {
-            Envelope extent = null;
-
-            foreach (var filename in filenames)
-            {
-                using ShapefileReader reader = Shapefile.OpenRead(filename);
-
-                if (extent == null)
-                    extent = reader.BoundingBox;
-                else
-                    extent.ExpandToInclude(reader.BoundingBox);
-            }
-
-            // Expand to integer values to get cell size 1.0000000 meters 
-            extent = new Envelope(
-                Math.Floor(extent.MinX),
-                Math.Ceiling(extent.MaxX),
-                Math.Floor(extent.MinY),
-                Math.Ceiling(extent.MaxY));
-
-            InitializeRaster(extent);
-        }
-
-        public void AddRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
-        {
-            // Join the dictionaries
-            _nlsClassesToRasterValues = _nlsClassesToRasterValues.Concat(classesToRasterValues)
-                .ToDictionary(x => x.Key, x => x.Value);
-        }
-
-        public void RemoveRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
-        {
-            foreach (var item in classesToRasterValues)
-            {
-                _nlsClassesToRasterValues.Remove(item.Key);
-            }
-        }
 
         public void RasteriseShapefile(string filename)
         {
@@ -98,25 +50,18 @@ namespace LasUtility.ShapefileRasteriser
                 if (iMin == RcIndex.Empty || iMax == RcIndex.Empty)
                     continue;
 
-                if (feature.Geometry is MultiPolygon)
+                if (feature.Geometry is MultiPolygon mp)
                 {
-                    MultiPolygon multiPolygon = (MultiPolygon)feature.Geometry;
-
-                    for (int i = 0; i < multiPolygon.NumGeometries; i++)
+                    for (int i = 0; i < mp.NumGeometries; i++)
                     {
-                        Polygon p = (Polygon)multiPolygon.GetGeometryN(0);
-                        ProcessPolygon(rasterValue, iMin, iMax, p);
+                        ProcessPolygon(rasterValue, iMin, iMax, (Polygon)mp.GetGeometryN(i));
                     }
                 }
-                else if (feature.Geometry is MultiLineString)
+                else if (feature.Geometry is MultiLineString mls)
                 {
-                    MultiLineString multiLineString = (MultiLineString)feature.Geometry;
-
-                    for (int i = 0; i < multiLineString.NumGeometries; i++)
+                    for (int i = 0; i < mls.NumGeometries; i++)
                     {
-                        LineString l = (LineString)multiLineString.GetGeometryN(0);
-
-                        ProcessLine(rasterValue, l);
+                        ProcessLine(rasterValue, (LineString)mls.GetGeometryN(i));
                     }
                 }
                 else
@@ -126,9 +71,9 @@ namespace LasUtility.ShapefileRasteriser
             }
         }
 
-        private void ProcessLine(byte rasterValue, LineString l)
+        private void ProcessLine(byte rasterValue, LineString ls)
         {
-            CoordinateSequence coordinateSequence = l.CoordinateSequence;
+            CoordinateSequence coordinateSequence = ls.CoordinateSequence;
 
             for (int i = 1; i < coordinateSequence.Count; i++)
             {
@@ -138,9 +83,9 @@ namespace LasUtility.ShapefileRasteriser
                 RcIndex iMin = Bounds.ProjToCell(c0);
                 RcIndex iMax = Bounds.ProjToCell(c1);
 
-                foreach ((int x, int y) c in Line(iMin.Column, iMin.Row, iMax.Column, iMax.Row))
+                foreach ((int x, int y) in Line(iMin.Column, iMin.Row, iMax.Column, iMax.Row))
                 {
-                    Raster[c.y][c.x] = rasterValue;
+                    Raster[y][x] = rasterValue;
                 }
             }
         }

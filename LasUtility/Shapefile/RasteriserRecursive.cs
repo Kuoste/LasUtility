@@ -1,67 +1,14 @@
 ﻿using LasUtility.Common;
 using NetTopologySuite.Geometries;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using NetTopologySuite.Features;
 using NetTopologySuite.IO.Esri;
-using System.Linq;
-using NetTopologySuite.IO.Esri.Shapefiles.Readers;
-using System.Threading;
 
 namespace LasUtility.ShapefileRasteriser
 {
-    public class RasteriserRecursive : ByteRaster, IShapefileRasteriser
+    public class RasteriserRecursive : Rasteriser, IShapefileRasteriser
     {
-        private Dictionary<int, byte> _nlsClassesToRasterValues = new();
-
-        private CancellationToken _token;
-
-        public void SetCancellationToken(CancellationToken token)
-        {
-            _token = token;
-        }
-
-        public void InitializeRaster(string[] filenames)
-        {
-            Envelope extent = null;
-
-            foreach (var filename in filenames)
-            {
-                using ShapefileReader reader = Shapefile.OpenRead(filename);
-
-                if (extent == null)
-                    extent = reader.BoundingBox;
-                else
-                    extent.ExpandToInclude(reader.BoundingBox);
-            }
-
-            // Expand to integer values to get cell size 1.0000000 meters 
-            extent = new Envelope(
-                Math.Floor(extent.MinX),
-                Math.Ceiling(extent.MaxX),
-                Math.Floor(extent.MinY),
-                Math.Ceiling(extent.MaxY));
-
-            InitializeRaster(extent);
-        }
-
-        public void AddRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
-        {
-            // Join the dictionaries
-            _nlsClassesToRasterValues = _nlsClassesToRasterValues.Concat(classesToRasterValues)
-                .ToDictionary(x => x.Key, x => x.Value);
-        }
-
-        public void RemoveRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
-        {
-            foreach (var item in classesToRasterValues)
-            {
-                _nlsClassesToRasterValues.Remove(item.Key);
-            }
-        }
-
-
         public void RasteriseShapefile(string filename)
         {
             int nAdded = 0;
