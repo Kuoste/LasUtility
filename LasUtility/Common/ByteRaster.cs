@@ -177,11 +177,12 @@ namespace LasUtility.Common
 
         public static ByteRaster CreateFromAscii(string sFullFilename)
         {
-            ByteRaster hm = new();
+            ByteRaster r = new();
 
             char[] delimiters = new char[] { ' ', '\t' };
 
-            int nRows = -1, nCols = -1, minX = -1, minY = -1, cellSize = -1, noDataValue = -1;
+            int iRowCount = -1, iColumnCount = -1, iMinX = -1, iMinY = -1, iNoData = -1;
+            double dCellSize = double.NaN;
 
             bool bIsCompressed = sFullFilename.EndsWith(FileExtensionCompressed);
 
@@ -198,26 +199,28 @@ namespace LasUtility.Common
                     if (!IsHeaderRead)
                     {
                         if (words[0].ToUpper().Trim() == "NCOLS")
-                            nCols = int.Parse(words[1]);
+                            iColumnCount = int.Parse(words[1]);
                         else if (words[0].ToUpper().Trim() == "NROWS")
-                            nRows = int.Parse(words[1]);
+                            iRowCount = int.Parse(words[1]);
                         else if (words[0].ToUpper().Trim() == "XLLCORNER")
-                            minX = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
+                            iMinX = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
                         else if (words[0].ToUpper().Trim() == "YLLCORNER")
-                            minY = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
+                            iMinY = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
                         else if (words[0].ToUpper().Trim() == "CELLSIZE")
-                            cellSize = Convert.ToInt32(Math.Floor(Convert.ToDouble(words[1])));
+                            dCellSize = Convert.ToDouble(words[1]);
                         else if (words[0].ToUpper().Trim() == "NODATA_VALUE")
-                            noDataValue = int.Parse(words[1]);
+                            iNoData = int.Parse(words[1]);
                         else
                         {
-                            if (nRows < 0 || nCols < 0 || minX < 0 || minY < 0 || cellSize < 0)
+                            if (iRowCount < 0 || iColumnCount < 0 || iMinX < 0 || iMinY < 0 || double.IsNaN(dCellSize))
                                 throw new Exception("Invalid format in header " + sFullFilename);
 
-                            Envelope extent = new(minX, minX + nCols, minY, minY + nRows);
-                            hm.InitializeRaster(extent);
+                            int iMaxX = iMinX + (int)Math.Ceiling(iColumnCount * dCellSize);
+                            int iMaxY = iMinY + (int)Math.Ceiling(iRowCount * dCellSize);
+
+                            r.InitializeRaster(iRowCount, iColumnCount, new(iMinX, iMaxX, iMinY, iMaxY));
                             IsHeaderRead = true;
-                            iRow = nRows;
+                            iRow = iRowCount;
                         }
                     }
 
@@ -228,13 +231,13 @@ namespace LasUtility.Common
 
                         if (false == bIsCompressed)
                         {
-                            if (words.Length != nCols)
+                            if (words.Length != iColumnCount)
                             {
                                 throw new Exception(String.Format("File {0} contains invalid column count {1} on line {2}",
-                                    sFullFilename, words.Length, nRows - iRow));
+                                    sFullFilename, words.Length, iRowCount - iRow));
                             }
 
-                            hm.Raster[--iRow] = Array.ConvertAll(words, byte.Parse);
+                            r.Raster[--iRow] = Array.ConvertAll(words, byte.Parse);
                         }
                         else
                         {
@@ -248,7 +251,7 @@ namespace LasUtility.Common
                                 if (parts.Length != 2)
                                 {
                                     throw new Exception(String.Format("File {0} contains invalid [count]x[value] format on line {1}",
-                                        sFullFilename, nRows - iRow + 1));
+                                        sFullFilename, iRowCount - iRow + 1));
                                 }
 
                                 int iValueCount = int.Parse(parts[0]);
@@ -256,15 +259,15 @@ namespace LasUtility.Common
 
                                 for (int i = 0; i < iValueCount; i++)
                                 {
-                                    hm.Raster[iRow][iCol++] = bValue;
+                                    r.Raster[iRow][iCol++] = bValue;
                                 }
 
                             }
 
-                            if (iCol != nCols)
+                            if (iCol != iColumnCount)
                             {
                                 throw new Exception(String.Format("File {0} contains invalid column count {1} on line {2}",
-                                    sFullFilename, iCol, nRows - iRow + 1));
+                                    sFullFilename, iCol, iRowCount - iRow + 1));
                             }
                         }
                     }
@@ -274,7 +277,7 @@ namespace LasUtility.Common
                     throw new Exception(String.Format("File {0} contains too few data rows", sFullFilename));
             }
 
-            return hm;
+            return r;
         }
 
         public void InitializeRaster(Envelope extent)

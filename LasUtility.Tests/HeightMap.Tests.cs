@@ -219,6 +219,40 @@ namespace LasUtility.Tests
         }
 
         [Fact]
+        public void CreateRasterNonMetricAndSave()
+        {
+            string sTestName = "CreateRasterNonMetricAndSave";
+            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
+
+            // Delete contents of output folder
+            if (Directory.Exists(sTestOutputFoldername))
+                Directory.Delete(sTestOutputFoldername, true);
+
+            Directory.CreateDirectory(sTestOutputFoldername);
+
+            const int iRowColCount = 1025;
+            Envelope bounds = new (1000, 2000, 5000, 6000);
+
+            ByteRaster br = new();
+            br.InitializeRaster(iRowColCount, iRowColCount, bounds);
+
+            RcIndex rc = br.Bounds.ProjToCell(new Coordinate(bounds.MaxX - RasterBounds.dEpsilon, bounds.MaxY - RasterBounds.dEpsilon));
+            br.Raster[rc.Row][rc.Column] = 100;
+
+            string sFullFilename = Path.Combine(sTestOutputFoldername, "test" + ByteRaster.FileExtensionCompressed);
+
+            br.WriteAsAscii(sFullFilename);
+
+            ByteRaster br2 = ByteRaster.CreateFromAscii(sFullFilename);
+
+            Assert.Equal(br.Bounds.MaxX, br2.Bounds.MaxX);
+            Assert.Equal(br.Bounds.MaxY, br2.Bounds.MaxY);
+            Assert.Equal(br.Bounds.CellWidth, br2.Bounds.CellWidth);
+
+            Assert.Equal(br.Raster[rc.Row][rc.Column], br2.Raster[rc.Row][rc.Column]);
+        }
+
+        [Fact]
         public void CreateRasterAndSaveAsCompressed()
         {
             string sTestName = "CreateRasterAndSaveAsCompressed";
