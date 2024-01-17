@@ -316,6 +316,34 @@ namespace LasUtility.VoxelGrid
             return null;
         }
 
+        public void WriteDemAsAscii(string sFullFilename)
+        {
+            const int iNoDataValue = -999;
+
+            using StreamWriter file = new(sFullFilename);
+
+            file.WriteLine("ncols         " + Bounds.ColumnCount);
+            file.WriteLine("nrows         " + Bounds.RowCount);
+            file.WriteLine("xllcorner     " + Bounds.MinX);
+            file.WriteLine("yllcorner     " + Bounds.MinY);
+            file.WriteLine("cellsize      " + Bounds.CellWidth);
+            file.WriteLine("NODATA_value  " + iNoDataValue);
+
+            for (int iRow = Bounds.RowCount - 1; iRow >= 0; --iRow)
+            {
+                for (int jCol = 0; jCol < Bounds.ColumnCount; ++jCol)
+                {
+                    float fVal = Dem[iRow, jCol];
+
+                    if (float.IsNaN(fVal))
+                        fVal = iNoDataValue;
+
+                    file.Write(fVal + " ");
+                }
+                file.Write(Environment.NewLine);
+            }
+        }
+
         public void Serialize(string sFullFilename)
         {
             // Write to a temporary file first to avoid corrupting the file if the process is interrupted.
