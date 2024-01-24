@@ -19,6 +19,8 @@ namespace LasUtility.DEM
 
         readonly bool _bUseIndexingOnTriangles;
 
+        public int PointCount => _vertices.Count;
+
         public void Clear()
         {
             _voronoiMesh = null;
@@ -27,16 +29,15 @@ namespace LasUtility.DEM
             _grid = null;
         }
 
-        public bool AddPoint(LasPoint p)
+        public void AddPoint(LasPoint p)
         {
             if (p.x < _grid.Bounds.MinX || p.x >= _grid.Bounds.MaxX ||
                 p.y < _grid.Bounds.MinY || p.y >= _grid.Bounds.MaxY)
             {
-                return false;
+                throw new Exception("Adding point that is out of bounds");
             }
 
             _vertices.Add(new Vertex(p.x, p.y, p.z, p.classification));
-            return true;
         }
 
         public void AddPoint(int iRow, int jCol, double z, byte classification)
