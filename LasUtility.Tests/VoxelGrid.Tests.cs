@@ -58,6 +58,17 @@ namespace LasUtility.Tests
             string sInputFilename = Path.Combine(sTestInputFoldername, "points.obj");
             string sOutputFilename = Path.Combine(sTestOutputFoldername, "points.obj");
 
+            // Delete contents of output folder
+            if (Directory.Exists(sTestOutputFoldername))
+                Directory.Delete(sTestOutputFoldername, true);
+
+            // Create folders if they don't exist
+            if (!Directory.Exists(sTestInputFoldername))
+                Directory.CreateDirectory(sTestInputFoldername);
+
+            if (!Directory.Exists(sTestOutputFoldername))
+                Directory.CreateDirectory(sTestOutputFoldername);
+
             int iGridSize = 10;
             double dMinX = 0.0;
             double dMinY = 100000.0;
