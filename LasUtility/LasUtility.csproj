@@ -15,11 +15,6 @@
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="laszip.net">
-      <HintPath>..\external\laszip.net.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="MIConvexHull.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -30,5 +25,10 @@
     <PackageReference Include="NetTopologySuite.IO.Esri.Shapefile" Version="1.0.0" />
     <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.8.0.20230708" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="laszip.net">
+      <HintPath>..\ThirdParty\laszip.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
