@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using laszip.net;
 
 namespace LasUtility.LAS
@@ -38,22 +39,21 @@ namespace LasUtility.LAS
             return _lasZip.header;
         }
 
-        public LasPoint ReadPoint()
+        public IEnumerable<LasPoint> Points()
         {
-            LasPoint p = new ();
+            while (GetNextPoint() == true)
+            {
+                double[] coordinates = new double[3];
+                _lasZip.laszip_get_coordinates(coordinates);
 
-            if (GetNextPoint() == false)
-                return null;
-
-            double[] coordinates = new double[3];
-            _lasZip.laszip_get_coordinates(coordinates);
-
-            p.x = coordinates[0];
-            p.y = coordinates[1];
-            p.z = coordinates[2];
-            p.classification = _lasZip.point.classification;
-
-            return p;
+                yield return new LasPoint
+                {
+                    x = coordinates[0],
+                    y = coordinates[1],
+                    z = coordinates[2],
+                    classification = _lasZip.point.classification
+                };
+            }
         }
 
         internal laszip_point ReadPointAsLasZipPoint(ref double[] coordinates)
@@ -78,6 +78,11 @@ namespace LasUtility.LAS
                 throw new Exception(_lasZip.laszip_get_error());
 
             return true;
+        }
+
+        public void Dispose()
+        {
+
         }
 
         public double MinX

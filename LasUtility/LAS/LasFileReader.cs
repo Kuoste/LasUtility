@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace LasUtility.LAS
@@ -66,7 +67,7 @@ namespace LasUtility.LAS
             MinY = reader.ReadDouble();
         }
 
-        public LasPoint ReadPoint()
+        IEnumerable<LasPoint> ILasFileReader.Points()
         {
             throw new NotImplementedException();
         }
@@ -79,6 +80,11 @@ namespace LasUtility.LAS
         public void CloseReader()
         {
             throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }

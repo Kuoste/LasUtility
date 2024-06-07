@@ -27,6 +27,9 @@
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.8.0.20230708" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\LasZipNetStandard\LasZipNetStandard\LasZipNetStandard.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="laszip.net">
       <HintPath>..\ThirdParty\laszip.net.dll</HintPath>
     </Reference>

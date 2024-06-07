@@ -27,4 +27,10 @@
     <ProjectReference Include="..\LasUtility\LasUtility.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="dll\laszip64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,7 +1,9 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+
 namespace LasUtility.LAS
 {
-    public interface ILasFileReader
+    public interface ILasFileReader : IDisposable
     {
         double MinX { get; }
         double MinY { get; }
@@ -9,7 +11,7 @@ namespace LasUtility.LAS
         double MaxX { get; }
 
         void ReadHeader(string fullFilePath);
-        LasPoint ReadPoint();
+        IEnumerable<LasPoint> Points();
         int OpenReader(string fullFilePath);
         void CloseReader();
     }
