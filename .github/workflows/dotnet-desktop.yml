@@ -68,9 +68,10 @@ jobs:
         fetch-depth: 0
 
     - name: Checkout LasZipNetStandard
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
       with:
-        name: kuoste/laszipnetstandard
+        repository: kuoste/laszipnetstandard
+        path: ../
 
     # Install the .NET Core workload
     - name: Install .NET Core
