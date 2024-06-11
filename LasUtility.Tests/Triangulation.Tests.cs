@@ -9,34 +9,34 @@ namespace LasUtility.Tests
     {
         readonly string _sTestFoldername = Path.Combine("..", "..", "..", "TestFiles", "Triangulation");
 
-        [Fact]
-        public void AddPointCloudAndTriangulate_LasZipPort()
-        {
-            string sTestName = "AddPointCloudAndTriangulate";
-            string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
-            string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
+        //[Fact]
+        //public void AddPointCloudAndTriangulate_LasZipPort()
+        //{
+        //    string sTestName = "AddPointCloudAndTriangulate";
+        //    string sTestInputFoldername = Path.Combine(_sTestFoldername, sTestName, "Input");
+        //    string sTestOutputFoldername = Path.Combine(_sTestFoldername, sTestName, "Output");
 
-            // Delete contents of output folder
-            if (Directory.Exists(sTestOutputFoldername))
-                Directory.Delete(sTestOutputFoldername, true);
+        //    // Delete contents of output folder
+        //    if (Directory.Exists(sTestOutputFoldername))
+        //        Directory.Delete(sTestOutputFoldername, true);
 
-            string sOutputShpFilename = Path.Combine(sTestOutputFoldername, "DEM.shp");
+        //    string sOutputShpFilename = Path.Combine(sTestOutputFoldername, "DEM.shp");
 
-            // Create folders if they don't exist
-            if (!Directory.Exists(sTestInputFoldername))
-                Directory.CreateDirectory(sTestInputFoldername);
+        //    // Create folders if they don't exist
+        //    if (!Directory.Exists(sTestInputFoldername))
+        //        Directory.CreateDirectory(sTestInputFoldername);
 
-            if (!Directory.Exists(sTestOutputFoldername))
-                Directory.CreateDirectory(sTestOutputFoldername);
+        //    if (!Directory.Exists(sTestOutputFoldername))
+        //        Directory.CreateDirectory(sTestOutputFoldername);
 
-            string sLasFullFileName = Path.Combine(sTestInputFoldername, "Q5232E1_cropped.laz");
+        //    string sLasFullFileName = Path.Combine(sTestInputFoldername, "Q5232E1_cropped.laz");
 
-            RunAddAndTriangulate(new LasZipFileReader(), sLasFullFileName, sOutputShpFilename);
+        //    RunAddAndTriangulate(new LasZipFileReader(), sLasFullFileName, sOutputShpFilename);
 
-            string sInputShpFilename = Path.Combine(sTestInputFoldername, "DEM.shp");
-            Assert.True(File.Exists(sInputShpFilename), "Reference file does not exists in Input folder");
-            Assert.True(Utils.FileCompare(sInputShpFilename, sOutputShpFilename), "File contents do not match");
-        }
+        //    string sInputShpFilename = Path.Combine(sTestInputFoldername, "DEM.shp");
+        //    Assert.True(File.Exists(sInputShpFilename), "Reference file does not exists in Input folder");
+        //    Assert.True(Utils.FileCompare(sInputShpFilename, sOutputShpFilename), "File contents do not match");
+        //}
 
         [Fact]
         public void AddPointCloudAndTriangulate_LasZipPInvoke()

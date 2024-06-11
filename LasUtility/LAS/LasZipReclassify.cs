@@ -1,6 +1,7 @@
-﻿using LasUtility.Common;
-using laszip.net;
+﻿using Kuoste.LasZipNetStandard;
+using LasUtility.Common;
 using NetTopologySuite.Geometries;
+using System;
 
 namespace LasUtility.LAS
 {
@@ -21,41 +22,51 @@ namespace LasUtility.LAS
 
         public long Run()
         {
-            LasZipFileReader reader = new ();
-            LasZipFileWriter writer = new ();
+            LasZip lasZip = new(out string version);
+            Console.WriteLine("Using laszip dll " + version);
 
-            reader.OpenReader(_sLasFullFilename);
-            writer.SetHeader(reader.GetHeader());
-            writer.OpenWriter(_sOutputLasFileName, true);
+            lasZip.OpenReader(_sLasFullFilename);
 
-            laszip_point p;
-            double[] scaledCoords = new double[3];
+            LaszipHeaderStruct h = lasZip.GetReaderHeader();
+            lasZip.SetWriterHeader(h);
+
+            lasZip.OpenWriter(_sOutputLasFileName, true);
+
+            Kuoste.LasZipNetStandard.LasPoint p = new();
             long nReclassified = 0;
-            while ((p = reader.ReadPointAsLasZipPoint(ref scaledCoords)) != null)
+            ulong ulPointCount = Math.Max(h.NumberOfPointRecords, h.ExtendedNumberOfPointRecords);
+
+
+            for (ulong i = 0; i < ulPointCount; i++)
             {
-                double classValue = _classGrid.GetValue(new Coordinate(scaledCoords[0], scaledCoords[1]));
+                lasZip.ReadPoint(ref p);
+
+                double classValue = _classGrid.GetValue(new Coordinate(p.X, p.Y));
 
                 if (!double.IsNaN(classValue))
                 {
                     if (classValue >= 70 && classValue < 100)
                     {
-                        if (p.classification == _iLasGroundClass)
+                        if (p.Classification == _iLasGroundClass)
                         {
-                            p.classification = (byte)classValue;
+                            p.Classification = (byte)classValue;
                         }
                     }
                     else
                     {
-                        if (p.return_number == p.number_of_returns_of_given_pulse)
-                            p.classification = (byte)classValue;
+                        if (p.ReturnNumber == p.NumberOfReturns)
+                            p.Classification = (byte)classValue;
                     }
                 }
 
-                writer.WritePoint(p);
+                lasZip.WritePoint(ref p);
             }
 
-            reader.CloseReader();
-            writer.CloseWriter();
+            lasZip.CloseReader();
+            lasZip.CloseWriter();
+
+            lasZip.DestroyReader();
+            lasZip.DestroyWriter();
 
             return nReclassified;
         }
