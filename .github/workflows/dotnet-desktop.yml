@@ -67,6 +67,11 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Checkout LasZipNetStandard
+      uses: actions/checkout@master
+      with:
+        name: kuoste/laszipnetstandard
+
     # Install the .NET Core workload
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
