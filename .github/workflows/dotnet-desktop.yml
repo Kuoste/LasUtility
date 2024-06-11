@@ -62,16 +62,16 @@ jobs:
       Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
 
     steps:
+    - name: Checkout LasZipNetStandard
+      uses: actions/checkout@v4
+      with:
+        repository: kuoste/laszipnetstandard
+    
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: LasUtility/
-
-    - name: Checkout LasZipNetStandard
-      uses: actions/checkout@v4
-      with:
-        repository: kuoste/laszipnetstandard
 
     # Install the .NET Core workload
     - name: Install .NET Core
