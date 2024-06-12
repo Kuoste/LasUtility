@@ -71,12 +71,13 @@ jobs:
         repository: kuoste/laszipnetstandard
         sparse-checkout: LasZipNetStandard
         sparse-checkout-cone-mode: false
+        path: LasZipNetStandard
     
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        path: LasUtility/
+        path: LasUtility
 
     # Install the .NET Core workload
     - name: Install .NET Core
