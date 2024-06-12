@@ -87,5 +87,27 @@ namespace LasUtility.LAS
                 };
             }
         }
+
+        IEnumerable<Kuoste.LasZipNetStandard.LasPoint> Points()
+        {
+            if (_isOpened == false)
+                throw new Exception("Cannot read point since las reader is not opened");
+
+            if (_isHeaderRead == false)
+                throw new Exception("Cannot read points since las header is not yet read");
+
+            Kuoste.LasZipNetStandard.LasPoint point = new();
+
+            ulong uPointCount = Math.Max(_header.NumberOfPointRecords, _header.ExtendedNumberOfPointRecords);
+            ulong uIndex = 0;
+
+            while (uIndex < uPointCount)
+            {
+                _lasZip.ReadPoint(ref point);
+                uIndex++;
+
+                yield return point;
+            }
+        }
     }
 }
