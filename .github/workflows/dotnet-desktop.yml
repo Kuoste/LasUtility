@@ -56,7 +56,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: workdir
+        working-directory: workdir # set the directory for LasUtility.sln
 
     env:
       Solution_Name:  LasUtility.sln                 # Replace with your solution name, i.e. MyWpfApp.sln.
@@ -69,7 +69,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: kuoste/laszipnetstandard
-        sparse-checkout: LasZipNetStandard
+        sparse-checkout: LasZipNetStandard # use sparse checkout to get only the wrapper project and not the tests
         sparse-checkout-cone-mode: false
         path: LasZipNetStandard
     
@@ -77,7 +77,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        path: workdir
+        path: workdir # checkout to any subfolder so that LasUtility.sln finds the LasZipNetStandard from the parent dir.
 
     # Install the .NET Core workload
     - name: Install .NET Core
