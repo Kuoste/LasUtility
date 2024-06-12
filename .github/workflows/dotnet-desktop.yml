@@ -71,7 +71,7 @@ jobs:
         repository: kuoste/laszipnetstandard
         sparse-checkout: LasZipNetStandard
         sparse-checkout-cone-mode: false
-        #path: LasZipNetStandard
+        path: LasZipNetStandard
     
     - name: Checkout
       uses: actions/checkout@v4
