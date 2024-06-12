@@ -40,7 +40,6 @@ name: .NET Core Desktop
 
 on:
   push:
-    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -55,17 +54,30 @@ jobs:
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
+    defaults:
+      run:
+        working-directory: workdir # set the directory for LasUtility.sln
+
     env:
-      Solution_Name: LasUtility.sln                             # Replace with your solution name, i.e. MyWpfApp.sln.
+      Solution_Name:  LasUtility.sln                 # Replace with your solution name, i.e. MyWpfApp.sln.
       Test_Project_Path: LasUtility.Tests\LasUtility.Tests.csproj       # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
       Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
       Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
 
     steps:
+    - name: Checkout LasZipNetStandard
+      uses: actions/checkout@v4
+      with:
+        repository: kuoste/laszipnetstandard
+        sparse-checkout: LasZipNetStandard # use sparse checkout to get only the wrapper project and not the tests
+        sparse-checkout-cone-mode: false
+        path: LasZipNetStandard
+    
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        path: workdir # checkout to any subfolder so that LasUtility.sln finds the LasZipNetStandard from the parent dir.
 
     # Install the .NET Core workload
     - name: Install .NET Core
