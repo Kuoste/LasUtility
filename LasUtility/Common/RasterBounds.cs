@@ -7,7 +7,10 @@ namespace LasUtility.Common
     [MessagePackObject]
     public class RasterBounds : IRasterBounds
     {
-        public const double dEpsilon = 0.00000001;
+        public const double dEpsilon = 0.00001;
+
+        [IgnoreMember]
+        public double Epsilon => dEpsilon;
 
         [Key(0)]
         public int RowCount { get; }
@@ -28,6 +31,9 @@ namespace LasUtility.Common
 
         [IgnoreMember]
         public double Height => MaxY - MinY;
+
+        [IgnoreMember]
+        public Envelope Envelope => new(MinX, MaxX, MinY, MaxY);
 
         [IgnoreMember]
         public double CellWidth { get { return Width / ColumnCount; } }

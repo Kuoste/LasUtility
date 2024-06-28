@@ -4,6 +4,7 @@ using LasUtility.ShapefileRasteriser;
 using System.Diagnostics;
 using LasUtility.Nls;
 using LasUtility.Common;
+using NetTopologySuite.Geometries;
 #if OPEN_CV
 using OpenCvSharp;
 #endif
@@ -42,6 +43,20 @@ namespace LasUtility.Tests
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
 
             rasteriser.InitializeRaster(shpFullFilenames);
+
+            Envelope bounds = new();
+            foreach (string filename in shpFullFilenames)
+            {
+                string[] splitNames = Path.GetFileName(filename).Split('_');
+
+                if (splitNames.Length < 3)
+                    throw new Exception("Filename not recognised as NLS shapefile");
+
+                TileNamer.Decode(splitNames[1], out Envelope b);
+                bounds.ExpandToInclude(b);
+            }
+
+            rasteriser.InitializeRaster(bounds);
 
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.WaterPolygonClassesToRasterValues);
             rasteriser.AddRasterizedClassesWithRasterValues(TopographicDb.WaterLineClassesToRasterValues);

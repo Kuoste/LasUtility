@@ -22,12 +22,15 @@ namespace LasUtility.ShapefileRasteriser
 
         public void RasteriseShapefile(string filename)
         {
-            if (null != _token && _token.IsCancellationRequested)
-                return;
-
+            Envelope areaBounds = new(Bounds.MinX, Bounds.MaxX - Bounds.Epsilon, Bounds.MinY, Bounds.MaxY - Bounds.Epsilon);
+            GeometryFactory factory = new();
+            Geometry areaGeometry = factory.ToGeometry(areaBounds);
 
             foreach (Feature feature in Shapefile.ReadAllFeatures(filename))
             {
+                if (null != _token && _token.IsCancellationRequested)
+                    return;
+
                 int classification = (int)(long)feature.Attributes["LUOKKA"];
 
                 if (!_nlsClassesToRasterValues.ContainsKey(classification))
@@ -35,40 +38,51 @@ namespace LasUtility.ShapefileRasteriser
 
                 byte rasterValue = _nlsClassesToRasterValues[classification];
 
-                Envelope envelope = feature.Geometry.EnvelopeInternal;
+                Geometry featureGeometry = feature.Geometry;
+                Envelope envelope = featureGeometry.EnvelopeInternal;
 
-                // No need to substract epsilon from the max values since the shapefile coordinates
-                // do not contain the upper limits.
+                // Clip the geometry if it is (partly) outside the raster 
+                if (areaBounds.Contains(envelope) == false)
+                {
+                    featureGeometry = featureGeometry.Intersection(areaGeometry);
+                    envelope = featureGeometry.EnvelopeInternal;
+                }
 
                 RcIndex iMin = Bounds.ProjToCell(new(envelope.MinX, envelope.MinY));
                 RcIndex iMax = Bounds.ProjToCell(new(envelope.MaxX, envelope.MaxY));
 
-                // Skip if outside the raster.
                 if (iMin == RcIndex.Empty || iMax == RcIndex.Empty)
-                    continue;
+                    throw new Exception("Still outside raster");
 
-                if (feature.Geometry is MultiPolygon mp)
+                switch (featureGeometry)
                 {
-                    for (int i = 0; i < mp.NumGeometries; i++)
-                    {
-                        ProcessPolygon(rasterValue, iMin, iMax, (Polygon)mp.GetGeometryN(i));
-                    }
-                }
-                else if (feature.Geometry is MultiLineString mls)
-                {
-                    for (int i = 0; i < mls.NumGeometries; i++)
-                    {
-                        ProcessLine(rasterValue, (LineString)mls.GetGeometryN(i));
-                    }
-                }
-                else
-                {
-                    throw new Exception("Unsupported geometry");
+                    case Polygon p:
+                        RasterisePolygon(rasterValue, iMin, iMax, p);
+                        break;
+                    case MultiPolygon mp:
+                        for (int i = 0; i < mp.NumGeometries; i++)
+                        {
+                            RasterisePolygon(rasterValue, iMin, iMax, (Polygon)mp.GetGeometryN(i));
+                        }
+                        break;
+                    case LineString ls:
+                        RasteriseLine(rasterValue, ls);
+                        break;
+                    case MultiLineString mls:
+                        for (int i = 0; i < mls.NumGeometries; i++)
+                        {
+                            RasteriseLine(rasterValue, (LineString)mls.GetGeometryN(i));
+                        }
+                        break;
+                    default:
+                        throw new Exception("Unsupported geometry " + featureGeometry.GeometryType);
+                    case null:
+                        throw new ArgumentNullException(nameof(featureGeometry));
                 }
             }
         }
 
-        private void ProcessLine(byte rasterValue, LineString ls)
+        private void RasteriseLine(byte rasterValue, LineString ls)
         {
             CoordinateSequence coordinateSequence = ls.CoordinateSequence;
 
@@ -87,7 +101,7 @@ namespace LasUtility.ShapefileRasteriser
             }
         }
 
-        private void ProcessPolygon(byte rasterValue, RcIndex iMin, RcIndex iMax, Polygon p)
+        private void RasterisePolygon(byte rasterValue, RcIndex iMin, RcIndex iMax, Polygon p)
         {
             // If polygon has holes, use temporary raster so that previous values inside holes (=interiorRings) are not lost
             bool bUseSeparateRaster = p.NumInteriorRings > 0;
