@@ -11,6 +11,8 @@ namespace LasUtility.ShapefileRasteriser
 
         public void InitializeRaster(string[] filenames);
 
+        public void InitializeRaster(Envelope bounds);
+
         public void AddRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues);
 
         public void RemoveRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues);

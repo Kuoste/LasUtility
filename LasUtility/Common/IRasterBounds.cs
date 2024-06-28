@@ -14,6 +14,8 @@ namespace LasUtility.Common
         double MinY { get; }
         double MaxY { get; }
 
+        double Epsilon { get; }
+
         RcIndex ProjToCell(Coordinate coordinate);
         Coordinate CellBottomLeftToProj(int iRow, int jCol);
         Coordinate CellTopRightToProj(int iRow, int jCol);

@@ -86,31 +86,29 @@ namespace LasUtility.Common
             }
         }
 
-        public static void FillPolygon(IRasterBounds bounds, ByteRaster dest, byte rasterValue, LineString polygonLine)
+        public static void FillPolygon(IRasterBounds bounds, ByteRaster dest, byte rasterValue, LineString lsPolygon)
         {
-            Envelope envelope = polygonLine.EnvelopeInternal;
+            Envelope envelope = lsPolygon.EnvelopeInternal;
 
             RcIndex iMin = bounds.ProjToCell(new(envelope.MinX, envelope.MinY));
             RcIndex iMax = bounds.ProjToCell(new(envelope.MaxX, envelope.MaxY));
 
-            int IMAGE_TOP = iMin.Row;
-            int IMAGE_BOT = iMax.Row;
-            int IMAGE_LEFT = iMin.Column;
-            int IMAGE_RIGHT = iMax.Column;
-            int polyCorners = polygonLine.NumPoints;
+            if (iMin == RcIndex.Empty || iMax == RcIndex.Empty)
+                throw new Exception("Polygon is larger than the bounds");
 
-            double[] polyX = new double[polyCorners];
-            double[] polyY = new double[polyCorners];
+            int iCornerCount = lsPolygon.NumPoints;
 
-            for (int pc = 0; pc < polyCorners; pc++)
+            double[] polyX = new double[iCornerCount];
+            double[] polyY = new double[iCornerCount];
+
+            for (int i = 0; i < iCornerCount; i++)
             {
-                var point = polygonLine.GetPointN(pc);
-                RcIndex rc = bounds.ProjToCell(new Coordinate(point.X, point.Y));
-                polyX[pc] = rc.Column;
-                polyY[pc] = rc.Row;
+                RcIndex rc = bounds.ProjToCell(lsPolygon.GetCoordinateN(i));
+                polyX[i] = rc.Column;
+                polyY[i] = rc.Row;
             }
 
-            FillPolygonInt(dest, rasterValue, IMAGE_TOP, IMAGE_BOT, IMAGE_LEFT, IMAGE_RIGHT, polyCorners, polyX, polyY);
+            FillPolygonInt(dest, rasterValue, iMax.Row, iMin.Row, iMin.Column, iMax.Column, iCornerCount, polyX, polyY);
         }
 
         private static void FillPolygonInt(ByteRaster dest, byte rasterValue, int IMAGE_TOP, int IMAGE_BOT, int IMAGE_LEFT, int IMAGE_RIGHT, int polyCorners, double[] polyX, double[] polyY)
@@ -119,23 +117,23 @@ namespace LasUtility.Common
             //  public-domain code by Darel Rex Finley, 2007
 
             const int iMaxNodesPerRow = 100;
-            int nodes, pixelX, pixelY, i, j, swap;
+            int iNodeCount, pixelX, pixelY, i, j, swap;
             int[] nodeX = new int[iMaxNodesPerRow];
 
             //Loop through the rows of the image.
-            for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++)
+            for (pixelY = IMAGE_BOT; pixelY <= IMAGE_TOP; pixelY++)
             {
                 //  Build a list of nodes.
-                nodes = 0; j = polyCorners - 1;
-
-                if (nodes > iMaxNodesPerRow)
-                    throw new Exception($"RasteriserEvenOdd: Cannot process polygons with more than {iMaxNodesPerRow} edges per row.");
+                iNodeCount = 0; j = polyCorners - 1;
 
                 for (i = 0; i < polyCorners; i++)
                 {
                     if (polyY[i] < pixelY && polyY[j] >= pixelY || polyY[j] < pixelY && polyY[i] >= pixelY)
                     {
-                        nodeX[nodes++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i]) * (polyX[j] - polyX[i]));
+                        if (iNodeCount > iMaxNodesPerRow)
+                            throw new Exception($"Cannot process polygons with more than {iMaxNodesPerRow} edges per row.");
+
+                        nodeX[iNodeCount++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i]) * (polyX[j] - polyX[i]));
                     }
 
                     j = i;
@@ -144,11 +142,13 @@ namespace LasUtility.Common
                 //  Sort the nodes, via a simple “Bubble” sort.
                 i = 0;
 
-                while (i < nodes - 1)
+                while (i < iNodeCount - 1)
                 {
                     if (nodeX[i] > nodeX[i + 1])
                     {
-                        swap = nodeX[i]; nodeX[i] = nodeX[i + 1]; nodeX[i + 1] = swap;
+                        swap = nodeX[i];
+                        nodeX[i] = nodeX[i + 1];
+                        nodeX[i + 1] = swap;
                         if (i > 0)
                             i--;
                     }
@@ -159,23 +159,11 @@ namespace LasUtility.Common
                 }
 
                 //  Fill the pixels between node pairs.
-                for (i = 0; i < nodes; i += 2)
+                for (i = 0; i < iNodeCount; i += 2)
                 {
-                    if (nodeX[i] >= IMAGE_RIGHT)
-                        break;
-
-                    if (nodeX[i + 1] > IMAGE_LEFT)
+                    for (pixelX = nodeX[i]; pixelX < nodeX[i + 1]; pixelX++)
                     {
-                        if (nodeX[i] < IMAGE_LEFT)
-                            nodeX[i] = IMAGE_LEFT;
-
-                        if (nodeX[i + 1] > IMAGE_RIGHT)
-                            nodeX[i + 1] = IMAGE_RIGHT;
-
-                        for (pixelX = nodeX[i]; pixelX < nodeX[i + 1]; pixelX++)
-                        {
-                            dest.Raster[pixelY][pixelX] = rasterValue;
-                        }
+                        dest.Raster[pixelY][pixelX] = rasterValue;
                     }
                 }
             }
