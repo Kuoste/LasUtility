@@ -18,13 +18,13 @@
     <Content Include="MIConvexHull.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.5.124" />
+    <PackageReference Include="MessagePack" Version="2.5.172" />
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="NetTopologySuite" Version="2.5.0" />
     <PackageReference Include="NetTopologySuite.Features" Version="2.1.0" />
-    <PackageReference Include="NetTopologySuite.IO.Esri.Shapefile" Version="1.0.0" />
-    <PackageReference Include="OpenCvSharp4" Version="4.8.0.20230708" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.8.0.20230708" />
+    <PackageReference Include="NetTopologySuite.IO.Esri.Shapefile" Version="1.1.0" />
+    <PackageReference Include="OpenCvSharp4" Version="4.10.0.20240616" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20240616" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\LasZipNetStandard\LasZipNetStandard\LasZipNetStandard.csproj" />
