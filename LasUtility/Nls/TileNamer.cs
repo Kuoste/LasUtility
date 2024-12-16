@@ -25,33 +25,33 @@ namespace LasUtility.Nls
         /// The min coordinate of the starting tile if it was full sized. Actual coordinate is -76000 + 192000/2 = 20000,
         /// but use this for simplier calculations.
         /// </summary>
-        private const int _iStartOrigoEast = -76000;
+        private const int _iStartMinEast = -76000;
 
         /// <summary>
         /// The min coordinate of the starting tile K2
         /// </summary>
-        private const int _iStartOrigoNorth = 6570000;
+        private const int _iStartMinNorth = 6570000;
 
 
         /// <summary>
         /// Smallest coordinate supported by the ETRS-TM35FIN system
         /// </summary>
-        private const int _iMinEast = 20000;
+        private const int _iMinAllowedEast = 20000;
 
         /// <summary>
         /// Smallest coordinate supported by the ETRS-TM35FIN system
         /// </summary>
-        private const int _iMinNorth = _iStartOrigoNorth;
+        private const int _iMinAllowedNorth = _iStartMinNorth;
 
         /// <summary>
         /// Largest coordinate supported by the ETRS-TM35FIN system.
         /// </summary>
-        private const int _iMaxEast = _iStartOrigoEast + 4 * _iStartSizeEast;
+        private const int _iMaxAllowedEast = _iStartMinEast + 4 * _iStartSizeEast;
 
         /// <summary>
         /// Largest coordinate supported by the ETRS-TM35FIN system.
         /// </summary>
-        private const int _iMaxNorth = _iStartOrigoNorth + 13 * _iStartSizeNorth;
+        private const int _iMaxAllowedNorth = _iStartMinNorth + 13 * _iStartSizeNorth;
 
         /// <summary>
         /// Largest supported tile edge length.
@@ -64,7 +64,7 @@ namespace LasUtility.Nls
         private const int _iStartSizeNorth = 96000;
 
         /// <summary>
-        /// Since eastward indexing starts from 2 (K2, L2, M2, ...) use this offset in calculations.
+        /// Since NLS eastward indexing starts from 2 (K2, L2, M2, ...) use this offset in calculations.
         /// </summary>
         private const int _iStartOffsetEast = 2;
 
@@ -116,19 +116,17 @@ namespace LasUtility.Nls
 
             iIndexEast -= _iStartOffsetEast;
 
-            int iOrigoEast = _iStartOrigoEast + iIndexEast * _iStartSizeEast;
-            int iOrigoNorth = _iStartOrigoNorth + iIndexNorth * _iStartSizeNorth;
+            int iMinEast = _iStartMinEast + iIndexEast * _iStartSizeEast;
+            int iMinNorth = _iStartMinNorth + iIndexNorth * _iStartSizeNorth;
 
             int iSizeEast = _iStartSizeEast;
             int iSizeNorth = _iStartSizeNorth;
 
-
-            bool bIsOk = DecodeRecursive(sMapTileName, iStringIndex, ref iSizeEast, ref iSizeNorth, ref iOrigoEast, ref iOrigoNorth);
+            bool bIsOk = DecodeRecursive(sMapTileName, iStringIndex, ref iMinEast, ref iMinNorth, ref iSizeEast, ref iSizeNorth);
 
             if (bIsOk == true)
             {
-                envelope = new(iOrigoEast, iOrigoEast + iSizeEast,
-                    iOrigoNorth, iOrigoNorth + iSizeNorth);
+                envelope = new(iMinEast, iMinEast + iSizeEast, iMinNorth, iMinNorth + iSizeNorth);
             }
             else
             {
@@ -140,7 +138,7 @@ namespace LasUtility.Nls
         }
 
 
-        private static bool DecodeRecursive(string sMapTileName, int iStringIndex, ref int iSizeEast, ref int iSizeNorth, ref int iOrigoEast, ref int iOrigoNorth)
+        private static bool DecodeRecursive(string sMapTileName, int iStringIndex, ref int iMinEast, ref int iMinNorth, ref int iSizeEast, ref int iSizeNorth)
         {
             iStringIndex++;
 
@@ -162,7 +160,7 @@ namespace LasUtility.Nls
                 if (sMapTileName[iStringIndex] == 'R')
                 {
                     iSizeEast /= 2;
-                    iOrigoEast += iSizeEast;
+                    iMinEast += iSizeEast;
                     return true;
                 }
             }
@@ -181,31 +179,31 @@ namespace LasUtility.Nls
                     case 'A':
                         break;
                     case 'B':
-                        iOrigoNorth += iSizeNorth;
+                        iMinNorth += iSizeNorth;
                         break;
                     case 'C':
-                        iOrigoEast += iSizeEast;
+                        iMinEast += iSizeEast;
                         break;
                     case 'D':
-                        iOrigoEast += iSizeEast;
-                        iOrigoNorth += iSizeNorth;
+                        iMinEast += iSizeEast;
+                        iMinNorth += iSizeNorth;
                         break;
                     case 'E':
-                        iOrigoEast += 2 * iSizeEast;
+                        iMinEast += 2 * iSizeEast;
                         break;
                     case 'F':
-                        iOrigoEast += 2 * iSizeEast;
-                        iOrigoNorth += iSizeNorth;
+                        iMinEast += 2 * iSizeEast;
+                        iMinNorth += iSizeNorth;
                         break;
                     case 'G':
-                        iOrigoEast += 3 * iSizeEast;
+                        iMinEast += 3 * iSizeEast;
                         break;
                     case 'H':
-                        iOrigoEast += 3 * iSizeEast;
-                        iOrigoNorth += iSizeNorth;
+                        iMinEast += 3 * iSizeEast;
+                        iMinNorth += iSizeNorth;
                         break;
                     default:
-                        throw new Exception("Tile name character should be between A-G at location " + iStringIndex);
+                        throw new Exception($"Tile name {sMapTileName}, character should be between A-G at location {iStringIndex}.");
                 }
             }
             else if (iSizeNorth == 3000)
@@ -220,51 +218,51 @@ namespace LasUtility.Nls
                 iSizeNorth = 1000;
 
                 if (sMapTileName[iStringIndex] != '_')
-                    throw new Exception("Tile name should contain an underscore at location " + iStringIndex);
+                    throw new Exception($"Tile name {sMapTileName} should contain an underscore at location {iStringIndex}.");
 
                 iStringIndex++;
 
                 if (int.TryParse(sMapTileName[iStringIndex].ToString(), out int d) == false)
-                    throw new Exception("Tile name should contain a digit at location " + iStringIndex);
+                    throw new Exception($"Tile name {sMapTileName} should contain a digit at location {iStringIndex}.");
 
                 if (d < 1 || d > 9)
-                    throw new Exception("Tile name should contain a digit between 1-9 at location " + iStringIndex);
+                    throw new Exception($"Tile name {sMapTileName} should contain a digit between 1-9 at location {iStringIndex}.");
 
                 if (d < 4)
                 {
                     if (d == 2)
                     {
-                        iOrigoNorth += iSizeNorth;
+                        iMinNorth += iSizeNorth;
                     }
                     else if (d == 3)
                     {
-                        iOrigoNorth += 2 * iSizeNorth;
+                        iMinNorth += 2 * iSizeNorth;
                     }
                 }
                 else if (d < 7)
                 {
-                    iOrigoEast += iSizeEast;
+                    iMinEast += iSizeEast;
 
                     if (d == 5)
                     {
-                        iOrigoNorth += iSizeNorth;
+                        iMinNorth += iSizeNorth;
                     }
                     else if (d == 6)
                     {
-                        iOrigoNorth += 2 * iSizeNorth;
+                        iMinNorth += 2 * iSizeNorth;
                     }
                 }
                 else
                 {
-                    iOrigoEast += 2 * iSizeEast;
+                    iMinEast += 2 * iSizeEast;
 
                     if (d == 8)
                     {
-                        iOrigoNorth += iSizeNorth;
+                        iMinNorth += iSizeNorth;
                     }
                     else if (d == 9)
                     {
-                        iOrigoNorth += 2 * iSizeNorth;
+                        iMinNorth += 2 * iSizeNorth;
                     }
                 }
             }
@@ -279,30 +277,30 @@ namespace LasUtility.Nls
 
                 if (int.TryParse(sMapTileName[iStringIndex].ToString(), out int d) == false)
                 {
-                    throw new Exception("Tile name should have a digit at location " + iStringIndex);
+                    throw new Exception($"Tile name {sMapTileName} should have a digit at location {iStringIndex}.");
                 }
 
                 if (d < 1 || d > 4)
                 {
-                    throw new Exception("Tile name should have a digit value between 0-4 at location " + iStringIndex);
+                    throw new Exception($"Tile name {sMapTileName} should have a digit value between 1-4 at location {iStringIndex}.");
                 }
 
                 if (d == 2)
                 {
-                    iOrigoNorth += iSizeNorth;
+                    iMinNorth += iSizeNorth;
                 }
                 else if (d == 3)
                 {
-                    iOrigoEast += iSizeEast;
+                    iMinEast += iSizeEast;
                 }
                 else if (d == 4)
                 {
-                    iOrigoEast += iSizeEast;
-                    iOrigoNorth += iSizeNorth;
+                    iMinEast += iSizeEast;
+                    iMinNorth += iSizeNorth;
                 }
             }
 
-            return DecodeRecursive(sMapTileName, iStringIndex, ref iSizeEast, ref iSizeNorth, ref iOrigoEast, ref iOrigoNorth);
+            return DecodeRecursive(sMapTileName, iStringIndex, ref iMinEast, ref iMinNorth, ref iSizeEast, ref iSizeNorth);
         }
 
         /// <summary>
@@ -319,18 +317,18 @@ namespace LasUtility.Nls
 
             string sMapTileName = String.Empty;
 
-            if (iEast < _iMinEast || iEast >= _iMaxEast || iNorth < _iMinNorth || iNorth >= _iMaxNorth)
+            if (iEast < _iMinAllowedEast || iEast >= _iMaxAllowedEast || iNorth < _iMinAllowedNorth || iNorth >= _iMaxAllowedNorth)
             {
                 throw new Exception("Coordinates out of bounds");
             }
 
             // Determine the character that starts the map tile name
-            int iIndexNorth = (iNorth - _iStartOrigoNorth) / _iStartSizeNorth;
+            int iIndexNorth = (iNorth - _iStartMinNorth) / _iStartSizeNorth;
             CharsTowardsNorth96000 c = (CharsTowardsNorth96000)iIndexNorth;
             sMapTileName += Enum.GetName(typeof(CharsTowardsNorth96000), c);
 
             // Determine digit that follows the char
-            int iIndexEast = (iEast - _iStartOrigoEast) / _iStartSizeEast;
+            int iIndexEast = (iEast - _iStartMinEast) / _iStartSizeEast;
             sMapTileName += (iIndexEast + _iStartOffsetEast).ToString();
 
             // Now we have calculated the name of the highest level. Return if that is enough.
@@ -341,15 +339,15 @@ namespace LasUtility.Nls
 
             // Otherwise enter a recursive function that stops at wanted level
             return EncodeRecursive(iEast, iNorth, iWantedSizeNorth, _iStartSizeEast, _iStartSizeNorth,
-                _iStartOrigoEast + iIndexEast * _iStartSizeEast, _iStartOrigoNorth + iIndexNorth * _iStartSizeNorth, sMapTileName);
+                _iStartMinEast + iIndexEast * _iStartSizeEast, _iStartMinNorth + iIndexNorth * _iStartSizeNorth, sMapTileName);
         }
 
         private static string EncodeRecursive(int iEast, int iNorth, int iWantedSizeKmNorth, int iSizeEast, int iSizeNorth,
-            int iOrigoEast, int iOrigoNorth, string sMapTileName)
+            int iMinEast, int iMinNorth, string sMapTileName)
         {
 
-            int iNextOrigoEast = iOrigoEast;
-            int iNextOrigoNorth = iOrigoNorth;
+            int iNextMinEast = iMinEast;
+            int iNextMinNorth = iMinNorth;
 
             if (iSizeNorth == 12000 && iSizeEast == 24000)
             {
@@ -360,25 +358,25 @@ namespace LasUtility.Nls
                 iSizeEast /= 4;
                 iSizeNorth /= 2;
 
-                if (((iNorth - iOrigoNorth) / iSizeNorth) == 0)
+                if (((iNorth - iMinNorth) / iSizeNorth) == 0)
                 {
                     // A C E G
-                    int iIndexEast = (iEast - iOrigoEast) / iSizeEast;
+                    int iIndexEast = (iEast - iMinEast) / iSizeEast;
                     CharsTowardsEast6000_0 c = (CharsTowardsEast6000_0)iIndexEast;
                     sMapTileName += Enum.GetName(typeof(CharsTowardsEast6000_0), c);
 
-                    iNextOrigoEast += iIndexEast * iSizeEast;
+                    iNextMinEast += iIndexEast * iSizeEast;
                 }
                 else
                 {
                     // B D F H
 
-                    int iIndexEast = (iEast - iOrigoEast) / iSizeEast;
+                    int iIndexEast = (iEast - iMinEast) / iSizeEast;
                     CharsTowardsEast6000_1 c = (CharsTowardsEast6000_1)iIndexEast;
                     sMapTileName += Enum.GetName(typeof(CharsTowardsEast6000_1), c);
 
-                    iNextOrigoNorth += iSizeNorth;
-                    iNextOrigoEast += iIndexEast * iSizeEast;
+                    iNextMinNorth += iSizeNorth;
+                    iNextMinEast += iIndexEast * iSizeEast;
                 }
             }
             else if (iSizeNorth == 3000 && iSizeEast == 3000)
@@ -392,8 +390,8 @@ namespace LasUtility.Nls
                 iSizeNorth = 1000;
                 iSizeEast = 1000;
 
-                int iIndexNorth = (iNorth - iOrigoNorth) / iSizeNorth;
-                int iIndexEast = (iEast - iOrigoEast) / iSizeEast;
+                int iIndexNorth = (iNorth - iMinNorth) / iSizeNorth;
+                int iIndexEast = (iEast - iMinEast) / iSizeEast;
 
                 if (iIndexNorth == 0)
                 {
@@ -414,7 +412,6 @@ namespace LasUtility.Nls
                     sMapTileName += Enum.GetName(typeof(CharsTowardsEast1000_2), c);
                 }
 
-                // No need to update the next origos since we are finished now
                 return sMapTileName;
             }
             else
@@ -426,30 +423,30 @@ namespace LasUtility.Nls
                 iSizeEast /= 2;
                 iSizeNorth /= 2;
 
-                if (((iEast - iOrigoEast) / iSizeEast) == 0)
+                if (((iEast - iMinEast) / iSizeEast) == 0)
                 {
-                    if (((iNorth - iOrigoNorth) / iSizeNorth) == 0)
+                    if (((iNorth - iMinNorth) / iSizeNorth) == 0)
                     {
                         sMapTileName += "1";
                     }
                     else
                     {
                         sMapTileName += "2";
-                        iNextOrigoNorth += iSizeNorth;
+                        iNextMinNorth += iSizeNorth;
                     }
                 }
                 else
                 {
-                    iNextOrigoEast += iSizeEast;
+                    iNextMinEast += iSizeEast;
 
-                    if (((iNorth - iOrigoNorth) / iSizeNorth) == 0)
+                    if (((iNorth - iMinNorth) / iSizeNorth) == 0)
                     {
                         sMapTileName += "3";
                     }
                     else
                     {
                         sMapTileName += "4";
-                        iNextOrigoNorth += iSizeNorth;
+                        iNextMinNorth += iSizeNorth;
                     }
                 }
             }
@@ -463,7 +460,7 @@ namespace LasUtility.Nls
                 {
                     iSizeEast /= 2;
 
-                    int iIndexEast = (iEast - iOrigoEast) / iSizeEast;
+                    int iIndexEast = (iEast - iMinEast) / iSizeEast;
 
                     if (iIndexEast == 0 || iIndexEast == 2)
                     {
@@ -480,7 +477,7 @@ namespace LasUtility.Nls
             }
 
             return EncodeRecursive(iEast, iNorth, iWantedSizeKmNorth, iSizeEast, iSizeNorth,
-                iNextOrigoEast, iNextOrigoNorth, sMapTileName);
+                iNextMinEast, iNextMinNorth, sMapTileName);
         }
     }
 }
