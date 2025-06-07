@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using Xunit;
-using LasUtility.ShapefileRasteriser;
+using LasUtility.Shapefile;
 using System.Diagnostics;
 using LasUtility.Nls;
 using LasUtility.Common;

@@ -1,14 +1,13 @@
 ﻿using NetTopologySuite.Geometries;
-using NetTopologySuite.IO.Esri.Shapefiles.Readers;
-using NetTopologySuite.IO.Esri;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using LasUtility.Common;
+using NetTopologySuite.IO.Esri.Shapefiles.Readers;
 
-namespace LasUtility.ShapefileRasteriser
+namespace LasUtility.Shapefile
 {
     public class Rasteriser : ByteRaster
     {
@@ -27,7 +26,7 @@ namespace LasUtility.ShapefileRasteriser
 
             foreach (var filename in filenames)
             {
-                using ShapefileReader reader = Shapefile.OpenRead(filename);
+                using ShapefileReader reader = NetTopologySuite.IO.Esri.Shapefile.OpenRead(filename);
                 extent.ExpandToInclude(reader.BoundingBox);
             }
 

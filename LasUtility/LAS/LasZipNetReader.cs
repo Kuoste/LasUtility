@@ -8,7 +8,7 @@ namespace LasUtility.LAS
 {
     public class LasZipNetReader : ILasFileReader, IDisposable
     {
-        private LasZip _lasZip;
+        private readonly LasZip _lasZip;
 
         private LaszipHeaderStruct _header;
 

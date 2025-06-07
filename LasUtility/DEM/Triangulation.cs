@@ -3,7 +3,6 @@ using LasUtility.LAS;
 using MIConvexHull;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.IO.Esri;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -108,7 +107,7 @@ namespace LasUtility.DEM
                 features.Add(new Feature(v.GetPolygon(), attributes));
             }
 
-            Shapefile.WriteAllFeatures(features, shpFilePath);
+            NetTopologySuite.IO.Esri.Shapefile.WriteAllFeatures(features, shpFilePath);
         }
 
         public double GetValue(double x, double y, out byte classification)
