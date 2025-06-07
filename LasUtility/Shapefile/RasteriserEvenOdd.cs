@@ -11,7 +11,7 @@ using System.Threading;
 using OpenCvSharp;
 using System.Diagnostics;
 
-namespace LasUtility.ShapefileRasteriser
+namespace LasUtility.Shapefile
 {
     public class RasteriserEvenOdd: Rasteriser, IShapefileRasteriser
     {
@@ -26,7 +26,7 @@ namespace LasUtility.ShapefileRasteriser
             GeometryFactory factory = new();
             Geometry areaGeometry = factory.ToGeometry(areaBounds);
 
-            foreach (Feature feature in Shapefile.ReadAllFeatures(filename))
+            foreach (Feature feature in NetTopologySuite.IO.Esri.Shapefile.ReadAllFeatures(filename))
             {
                 if (null != _token && _token.IsCancellationRequested)
                     return;

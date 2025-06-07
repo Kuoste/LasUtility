@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LasUtility.ShapefileRasteriser
+namespace LasUtility.Shapefile
 {
     public interface IShapefileRasteriser
     {
