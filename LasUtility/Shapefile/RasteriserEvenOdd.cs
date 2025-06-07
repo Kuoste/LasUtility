@@ -8,7 +8,6 @@ using NetTopologySuite.IO.Esri;
 using System.Linq;
 using NetTopologySuite.IO.Esri.Shapefiles.Readers;
 using System.Threading;
-using OpenCvSharp;
 using System.Diagnostics;
 
 namespace LasUtility.Shapefile
