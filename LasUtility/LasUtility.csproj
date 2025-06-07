@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\packages\OpenCvSharp4.runtime.win.4.5.0.20201013\build\net\OpenCvSharp4.runtime.win.props" Condition="Exists('..\packages\OpenCvSharp4.runtime.win.4.5.0.20201013\build\net\OpenCvSharp4.runtime.win.props')" />
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
@@ -23,8 +22,8 @@
     <PackageReference Include="NetTopologySuite" Version="2.6.0" />
     <PackageReference Include="NetTopologySuite.Features" Version="2.2.0" />
     <PackageReference Include="NetTopologySuite.IO.Esri.Shapefile" Version="1.2.0" />
-    <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
+    <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" Condition="$(DefineConstants.Contains('OPEN_CV'))" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" Condition="$(DefineConstants.Contains('OPEN_CV'))" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\LasZipNetStandard\LasZipNetStandard\LasZipNetStandard.csproj" />

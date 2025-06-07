@@ -1,4 +1,7 @@
 ﻿using NetTopologySuite.Geometries;
+#if OPEN_CV
+using OpenCvSharp;
+#endif
 using System;
 using System.IO;
 using System.Text;
@@ -121,25 +124,25 @@ namespace LasUtility.Common
 #if OPEN_CV
         public void WriteAsPng(string fullFileName)
         {
-            using Mat shpPic = new (_bounds.NumRows, _bounds.NumColumns, MatType.CV_8UC3);
+            using Mat shpPic = new (Bounds.RowCount, Bounds.ColumnCount, MatType.CV_8UC3);
 
             // OpenCV image channes are in order BGR(Blue - Green - Red)
             //const int OPEN_CV_RED = 2;
             //const int OPEN_CV_GREEN = 1;
             //const int OPEN_CV_BLUE = 0;
 
-            for (int iRow = 0; iRow < _bounds.NumRows; iRow++)
+            for (int iRow = 0; iRow < Bounds.RowCount; iRow++)
             {
-                for (int iCol = 0; iCol < _bounds.NumColumns; iCol++)
+                for (int iCol = 0; iCol < Bounds.ColumnCount; iCol++)
                 {
-                    if (_raster[iRow][iCol] != _noDataValue)
+                    if (Raster[iRow][iCol] != NoDataValue)
                     {
                         // Mirror rows
-                        int iRowMirrored = _bounds.NumRows - 1 - iRow;
+                        int iRowMirrored = Bounds.RowCount - 1 - iRow;
 
-                        shpPic.At<Vec3b>(iRowMirrored, iCol)[0] = _raster[iRow][iCol];
-                        shpPic.At<Vec3b>(iRowMirrored, iCol)[1] = _raster[iRow][iCol];
-                        shpPic.At<Vec3b>(iRowMirrored, iCol)[2] = _raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[0] = Raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[1] = Raster[iRow][iCol];
+                        shpPic.At<Vec3b>(iRowMirrored, iCol)[2] = Raster[iRow][iCol];
 
                     }
                 }
