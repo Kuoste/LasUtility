@@ -3,7 +3,7 @@
 	  <TargetFramework>netstandard2.1</TargetFramework>
 	  <OutputType>Library</OutputType>
 	  <PackageId>LasUtility</PackageId>
-	  <Version>0.9.1</Version>
+	  <Version>0.9.2</Version>
 	  <Authors>Kuoste</Authors>
 	  <Company>Kuoste</Company>
 	  <PackageDescription>A toolset for laz and shp files</PackageDescription>
@@ -23,6 +23,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
+    <None Update="README.md">
+      <Pack>true</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="LasZipNetStandard" Version="1.0.3" />
