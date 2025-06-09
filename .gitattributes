@@ -1,0 +1,2 @@
+# Exclude test folder from project language stats
+LasUtility.Tests/TestFiles/** linguist-vendored
