@@ -3,7 +3,7 @@
 	  <TargetFramework>netstandard2.1</TargetFramework>
 	  <OutputType>Library</OutputType>
 	  <PackageId>LasUtility</PackageId>
-	  <Version>0.9.0</Version>
+	  <Version>0.9.1</Version>
 	  <Authors>Kuoste</Authors>
 	  <Company>Kuoste</Company>
 	  <PackageDescription>A toolset for laz and shp files</PackageDescription>
