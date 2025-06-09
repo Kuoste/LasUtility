@@ -1,10 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <OutputType>Library</OutputType>
-    <RootNamespace>LasUtility</RootNamespace>
-    <AssemblyName>LasUtility</AssemblyName>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	  <TargetFramework>netstandard2.1</TargetFramework>
+	  <OutputType>Library</OutputType>
+	  <PackageId>LasUtility</PackageId>
+	  <Version>0.9.0</Version>
+	  <Authors>Kuoste</Authors>
+	  <Company>Kuoste</Company>
+	  <PackageDescription>A toolset for laz and shp files</PackageDescription>
+	  <RepositoryUrl>https://github.com/Kuoste/LasUtility</RepositoryUrl>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RootNamespace>LasUtility</RootNamespace>
+	  <AssemblyName>LasUtility</AssemblyName>
+	  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
