@@ -18,7 +18,7 @@ The library is available under MIT license. Note that this library depends on so
  - [LASZip](https://github.com/LASzip/LASzip), [Apache-2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
  - [LasZipNetStandard](https://github.com/Kuoste/LasZipNetStandard), [Apache-2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
  - [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp), [MIT License](https://en.wikipedia.org/wiki/MIT_license)
- - [MIConvexHull](https://github.com/DesignEngrLab/MIConvexHull), [MIT License](https://en.wikipedia.org/wiki/MIT_license)
+ - [Delaunator C#](https://github.com/nol1fe/delaunator-sharp), [MIT License](https://en.wikipedia.org/wiki/MIT_license)
  - [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite), [BSD-3-Clause](https://licenses.nuget.org/BSD-3-Clause)
 	
 
