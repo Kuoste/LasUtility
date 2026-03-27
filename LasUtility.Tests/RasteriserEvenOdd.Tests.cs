@@ -41,6 +41,9 @@ namespace LasUtility.Tests
 
             IShapefileRasteriser rasteriser = new RasteriserEvenOdd();
             string[] shpFullFilenames = Directory.GetFiles(sTestInputFoldername, "*.shp");
+            
+            // Sort files. Because of geometries in these files overlap, the order matters.
+            Array.Sort(shpFullFilenames);
 
             rasteriser.InitializeRaster(shpFullFilenames);
 
