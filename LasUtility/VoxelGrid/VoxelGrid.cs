@@ -118,7 +118,7 @@ namespace LasUtility.VoxelGrid
             return IsAdded;
         }
 
-        public void SetMissingHeightsFromTriangulation(SurfaceTriangulation tri,
+        public void SetMissingHeightsFromTriangulation(ITriangulation tri,
             int iMinX, int iMinY, int iMaxX, int iMaxY,
             out int nMissingBefore, out int nMissingAfter)
         {
