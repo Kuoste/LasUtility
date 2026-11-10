@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	  <TargetFramework>netstandard2.1</TargetFramework>
+	  <TargetFramework>netstandard2.0</TargetFramework>
 	  <OutputType>Library</OutputType>
 	  <PackageId>LasUtility</PackageId>
-	  <Version>0.9.3</Version>
+	  <Version>0.10.0</Version>
 	  <Authors>Kuoste</Authors>
 	  <Company>Kuoste</Company>
 	  <PackageDescription>A toolset for laz and shp files</PackageDescription>
@@ -30,8 +30,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Delaunator" Version="1.0.11" />
-    <PackageReference Include="LasZipNetStandard" Version="1.1.0" />
-    <PackageReference Include="MessagePack" Version="3.1.4" />
+    <PackageReference Include="LasZipNetStandard" Version="1.2.0" />
+    <PackageReference Include="MessagePack" Version="3.1.12" />
     <PackageReference Include="NetTopologySuite" Version="2.6.0" />
     <PackageReference Include="NetTopologySuite.Features" Version="2.2.0" />
     <PackageReference Include="NetTopologySuite.IO.Esri.Shapefile" Version="1.2.0" />

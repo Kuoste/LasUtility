@@ -72,16 +72,20 @@ namespace LasUtility.Common
             file.WriteLine("cellsize      " + Bounds.CellWidth);
             file.WriteLine("NODATA_value  " + NoDataValue);
 
+            byte[] line = new byte[iColumnCount];
+
             for (int iRow = end.Row; iRow >= start.Row; --iRow)
             {
+                Array.Copy(Raster[iRow], start.Column, line, 0, iColumnCount);
+
                 if (false == bIsCompressed)
                 {
                     // Write values separated by spaces
-                    file.WriteLine(String.Join(" ", Raster[iRow][start.Column..(end.Column + 1)]));
+                    file.WriteLine(String.Join(" ", line));
                 }
                 else
                 {
-                    file.WriteLine(GetCompressedString(Raster[iRow][start.Column..(end.Column + 1)]));
+                    file.WriteLine(GetCompressedString(line));
                 }
             }
         }
@@ -91,7 +95,7 @@ namespace LasUtility.Common
         /// </summary>
         /// <param name="line"></param>
         /// <returns></returns>
-        private ReadOnlySpan<char> GetCompressedString(byte[] line)
+        private string GetCompressedString(byte[] line)
         {
             StringBuilder sb = new(line.Length);
 
