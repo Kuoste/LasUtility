@@ -40,14 +40,18 @@ namespace LasUtility.Shapefile
             InitializeRaster(extent);
         }
 
-        public void AddRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
+        /// <summary>
+        /// Adds classes to rasterise. A class that is already added gets the new raster value.
+        /// </summary>
+        public void AddRasterizedClassesWithRasterValues(IReadOnlyDictionary<int, byte> classesToRasterValues)
         {
-            // Join the dictionaries
-            _nlsClassesToRasterValues = _nlsClassesToRasterValues.Concat(classesToRasterValues)
-                .ToDictionary(x => x.Key, x => x.Value);
+            foreach (var item in classesToRasterValues)
+            {
+                _nlsClassesToRasterValues[item.Key] = item.Value;
+            }
         }
 
-        public void RemoveRasterizedClassesWithRasterValues(Dictionary<int, byte> classesToRasterValues)
+        public void RemoveRasterizedClassesWithRasterValues(IReadOnlyDictionary<int, byte> classesToRasterValues)
         {
             foreach (var item in classesToRasterValues)
             {

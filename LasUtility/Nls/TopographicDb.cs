@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Net.NetworkInformation;
+using System.Collections.ObjectModel;
 
 namespace LasUtility.Nls
 {
@@ -15,13 +14,16 @@ namespace LasUtility.Nls
         public const string sPostfixForPolygon = "_p";
         public const string sPostfixForLine = "_v";
 
-        public static readonly Dictionary<int, byte> WaterLineClassesToRasterValues = new()
+        private static IReadOnlyDictionary<int, byte> ReadOnly(Dictionary<int, byte> classesToRasterValues) =>
+            new ReadOnlyDictionary<int, byte>(classesToRasterValues);
+
+        public static readonly IReadOnlyDictionary<int, byte> WaterLineClassesToRasterValues = ReadOnly(new()
         {
                 {36311, 50}, // Virtavesi, Watercourse, width under 2m
                 {36312, 51}  // Virtavesi, Watercourse 2-5m
-        };
+        });
 
-        public static readonly Dictionary<int, byte> RoadLineClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> RoadLineClassesToRasterValues = ReadOnly(new()
         {
                 {12111, 70}, // Autotie, Road Ia // mc id 44
                 {12112, 72}, // Autotie, Road Ib
@@ -36,9 +38,9 @@ namespace LasUtility.Nls
                 {12313, 88}, // Polku, Path
                 {12314, 86}, // Kävely- ja pyörätie, Pedestrian and bicycle route
                 {12316, 84}  // Ajopolku, Track
-        };
+        });
 
-        public static readonly Dictionary<int, byte> BuildingPolygonClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> BuildingPolygonClassesToRasterValues = ReadOnly(new()
         {
                 {42210, 100},  //	Asuinrakennus, Residential building, number of floors unspecified
                 {42211, 101},  //	Asuinrakennus, Residental building, 1-2 floors
@@ -59,48 +61,48 @@ namespace LasUtility.Nls
                 {42260, 116},  //	Muu rakennus, Other building, number of floors unspecified
                 {42261, 117},  //	Muu rakennus, Other building, 1-2 floors
                 {42262, 118},  //	Muu rakennus, Other building, 3-n floors
-        };
+        });
 
-        public static readonly Dictionary<int, byte> WaterPolygonClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> WaterPolygonClassesToRasterValues = ReadOnly(new()
         {
             {36200, 130},  //	Järvivesi, Lake water
             {36211, 131},  //	Merivesi, Sea water
-        };
+        });
 
-        public static readonly Dictionary<int, byte> SwampPolygonClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> SwampPolygonClassesToRasterValues = ReadOnly(new()
         {
             {35411, 135},  //	Suo, helppokulkuinen puuton, Open bog, easy to traverse treeless
             {35412, 136},  //	Suo, helppokulkuinen metsää kasvava, Bog, easy to traverse forested
             {35421, 137},  //	Suo, vaikeakulkuinen puuton, Open fen, difficult to traverse treeless
             {35422, 138},  //	Suo, vaikeakulkuinen metsää kasvava, Fen, difficult to traverse forested
-        };
+        });
 
-        public static readonly Dictionary<int, byte> FieldPolygonClassesToRasterValues = new ()
+        public static readonly IReadOnlyDictionary<int, byte> FieldPolygonClassesToRasterValues = ReadOnly(new()
         {
             {32611, 140},  //	Pelto, Field
             {32612, 141},  //   Puutarha, Garden
             {32800, 142},  //   Niitty, Meadow
-        };
+        });
 
-        public static readonly Dictionary<int, byte> RockPolygonClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> RockPolygonClassesToRasterValues = ReadOnly(new()
         {
             {34700, 145},  //	Kivikko, Rocky area
             {34100, 146},  //   Kallio - alue, Rock - area
             {32500, 147}, //   Louhos, Quarry
             {32111, 148},  //   Maa-aineksenottoalue, karkea kivennäisaines, Mineral resources extraction area, coarse-grained material
-        };
+        });
 
-        public static readonly Dictionary<int, byte> RockLineClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> RockLineClassesToRasterValues = ReadOnly(new()
         {
             {34400, 150},  //	Jyrkänne, Escarpment
             {34500, 151},  //   Kalliohalkeama, Fissure
             {34800, 152},  //   Luiska, Slope
-        };
+        });
 
-        public static readonly Dictionary<int, byte> SandPolygonClassesToRasterValues = new()
+        public static readonly IReadOnlyDictionary<int, byte> SandPolygonClassesToRasterValues = ReadOnly(new()
         {
             {34300, 160},  //	Hietikko, Sand
             {32112, 161},  //   Maa-aineksenottoalue, hieno kivennäisaines, Mineral resources extraction area, fine-grained material
-        };
+        });
     }
 }
